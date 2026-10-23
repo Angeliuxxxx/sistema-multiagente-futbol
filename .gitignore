@@ -1,8 +1,15 @@
+# Entorno y secretos
 venv/
 .env
-data/*.csv
+
+# Python / Jupyter
 __pycache__/
 .ipynb_checkpoints/
-node_modules/
+
+# Datos pesados e índices vectoriales (se regeneran con 03_rag_corpus.ipynb)
+data/*.csv
 data/chroma_db/
 data/chroma_index*/
+
+# Node (frontend)
+node_modules/
