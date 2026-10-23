@@ -1,3 +1,8 @@
 venv/
 .env
 data/*.csv
+__pycache__/
+.ipynb_checkpoints/
+node_modules/
+data/chroma_db/
+data/chroma_index*/
