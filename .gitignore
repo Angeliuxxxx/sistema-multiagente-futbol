@@ -13,3 +13,4 @@ data/chroma_index*/
 
 # Node (frontend)
 node_modules/
+data/*.pdf
