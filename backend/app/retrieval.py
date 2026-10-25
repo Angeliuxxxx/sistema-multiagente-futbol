@@ -73,7 +73,10 @@ def cargar_indice() -> Indice:
     # BM25 devuelve posiciones y Chroma devuelve ids "c{i}": solo se pueden cruzar si los ids van de c0 a c{n-1}.
     assert [int(datos["ids"][j][1:]) for j in orden] == list(range(len(orden))), "ids de Chroma no contiguos"
     chunks = [dict(texto=datos["documents"][j], **datos["metadatas"][j]) for j in orden]
-    return Indice(col=col, modelo=SentenceTransformer(MODELO_EMBEDDINGS), chunks=chunks, bm25={})
+    ind = Indice(col=col, modelo=SentenceTransformer(MODELO_EMBEDDINGS), chunks=chunks, bm25={})
+    for documentos, _ in CUPOS:   # los 3 índices BM25 se construyen ahora, no en la primera pregunta (costaba ~3 s)
+        _bm25_de(ind, documentos)
+    return ind
 
 
 def _bm25_de(ind: Indice, documentos: tuple[str, ...]) -> tuple[list[int], BM25Okapi]:

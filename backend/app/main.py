@@ -8,13 +8,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from . import prediction
-
+from . import prediction, retrieval
+from .chat import router as chat_router
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Al arrancar: si falta el .pkl o el CSV, mejor fallar aquí que en la primera petición.
     prediction.cargar_modelo()
     prediction.cargar_team_matches()
+    retrieval.cargar_indice()
     yield
 
 
@@ -28,6 +29,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # puerto por defecto de Vite
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(chat_router)
 
 class PredictRequest(BaseModel):
     local: str = Field(examples=["Barcelona"])
