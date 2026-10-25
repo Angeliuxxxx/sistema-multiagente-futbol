@@ -5,3 +5,7 @@ pandas
 joblib
 xgboost
 scikit-learn
+chromadb
+sentence-transformers
+rank_bm25
+snowballstemmer
