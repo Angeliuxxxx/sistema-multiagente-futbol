@@ -9,3 +9,5 @@ chromadb
 sentence-transformers
 rank_bm25
 snowballstemmer
+langchain-core
+langchain-ollama
