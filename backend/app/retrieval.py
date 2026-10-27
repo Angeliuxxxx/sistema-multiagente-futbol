@@ -87,8 +87,11 @@ def _bm25_de(ind: Indice, documentos: tuple[str, ...]) -> tuple[list[int], BM25O
     return ind.bm25[documentos]
 
 
+# candidatos = 30: con 20, el chunk de "doce futbolistas" (Art. 25) quedaba en el puesto 21 de embeddings y no
+# entraba en la fusión. Barrido 20/30/40/60: 30 es el menor valor que lo recupera (evaluar_frases 9/11 -> 10/11),
+# mantiene evaluar_recuperacion en 16/17 y no cambia la latencia (~70 ms); 40 y 60 no ganan nada más.
 def _hibrido(ind: Indice, pregunta: str, emb: list[float], k: int, documentos: tuple[str, ...],
-             candidatos: int = 20, k_rrf: int = 60) -> list[int]:
+             candidatos: int = 30, k_rrf: int = 60) -> list[int]:
     """Devuelve las posiciones de los k mejores chunks de una fuente, fusionando embeddings y BM25 con RRF."""
     r = ind.col.query(query_embeddings=[emb], n_results=candidatos, where={"documento": {"$in": list(documentos)}})
     denso = [int(i[1:]) for i in r["ids"][0]]                      # "c123" -> 123
