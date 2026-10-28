@@ -4,6 +4,7 @@ Flujo: pregunta -> retrieval.buscar (8 fragmentos) -> prompt -> LLM -> respuesta
 """
 from __future__ import annotations
 
+import logging
 import os
 import re
 import time
@@ -18,6 +19,7 @@ from pydantic import BaseModel, Field
 from .retrieval import Fragmento, buscar
 
 router = APIRouter(tags=["conocimiento"])
+log = logging.getLogger("uvicorn.error")   # mismo logger que uvicorn para que el aviso salga en su consola
 
 # Nombre legible de cada documento: es lo que verá el usuario como fuente (RF07).
 NOMBRES_DOCUMENTO = {
@@ -65,8 +67,32 @@ def crear_llm() -> BaseChatModel:
         model=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
         base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
         temperature=0,   # reglamento: queremos la misma respuesta ante la misma pregunta
-        num_ctx=4096,    # 8 fragmentos (~150 tokens c/u) + instrucciones caben de sobra; no pagamos contexto de más
+        # La GPU tiene 6 GB y el 7B no cabe entero: parte de las capas corre en CPU, que es lo que vuelve lento al LLM.
+        # El KV-cache crece con num_ctx, así que un contexto menor libera VRAM y deja más capas en GPU.
+        # Medición del 27/10/2026 (`ollama ps` + response_metadata):
+        #   num_ctx 4096 -> 5,2 GB, 18 % CPU, 17,4-19,5 tok/s
+        #   num_ctx 2048 -> 5,0 GB, 16 % CPU, 19,6-21,4 tok/s
+        # El prompt más largo de las 11 preguntas de evaluar_frases fue de 1.532 tokens (1.636 contando la respuesta),
+        # así que 2048 alcanza con margen. Si el prompt pasara de 2048, Ollama lo TRUNCA en silencio (perderíamos el
+        # inicio, es decir, las instrucciones): hay que volver a medir si se sube k o el tamaño de chunk.
+        num_ctx=2048,
+        # Por defecto Ollama descarga el modelo a los 5 min sin uso y la siguiente petición paga la carga completa.
+        keep_alive="30m",
     )
+
+
+def calentar_llm() -> None:
+    """Carga el modelo en memoria con la misma configuración que usará /chat (mismo num_ctx y mismo SISTEMA).
+
+    Por qué: la primera llamada real paga la carga de ~5 GB a GPU/CPU; mejor pagarla al arrancar. Usamos el SISTEMA real
+    para que Ollama deje su prefijo ya procesado. Nunca lanza: si Ollama no está, /chat dará 503 como siempre.
+    """
+    try:
+        t0 = time.perf_counter()
+        crear_llm().invoke([SystemMessage(content=SISTEMA), HumanMessage(content="FRAGMENTOS:\n\nPREGUNTA: hola")])
+        log.info("LLM calentado en %.1f s", time.perf_counter() - t0)
+    except Exception as e:  # noqa: BLE001 - el calentamiento es opcional, no debe tumbar el servidor
+        log.warning("No se pudo calentar el LLM (¿Ollama apagado?): %s", e)
 
 
 def _contexto(fragmentos: list[Fragmento]) -> str:

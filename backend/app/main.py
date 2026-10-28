@@ -1,4 +1,5 @@
 """API del sistema multiagente. Arranque: uvicorn app.main:app --reload (desde /backend)."""
+import asyncio
 from contextlib import asynccontextmanager
 from datetime import date
 from typing import Literal
@@ -9,26 +10,32 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from . import prediction, retrieval
-from .chat import router as chat_router
+from .chat import calentar_llm, router as chat_router
+
+
+def _calentar() -> None:
+    # En ese orden y no en paralelo: si el retrieval se calienta mientras Ollama carga ~5 GB, la carga desaloja de la
+    # memoria los pesos del modelo de embeddings y la primera pregunta real vuelve a pagar esos ~4 s.
+    calentar_llm()
+    retrieval.calentar()
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Al arrancar: si falta el .pkl o el CSV, mejor fallar aquí que en la primera petición.
     prediction.cargar_modelo()
     prediction.cargar_team_matches()
     retrieval.cargar_indice()
+    # Los calentamientos tardan segundos: van en un hilo aparte para que /health y /predict respondan desde el primer instante.
+    # Guardamos la tarea en una variable: asyncio solo guarda referencias débiles y podría recolectarla a medias.
+    calentamiento = asyncio.create_task(asyncio.to_thread(_calentar))
     yield
+    calentamiento.cancel()
 
 
 app = FastAPI(title="Analítica LaLiga — Sistema Multiagente", version="0.1.0", lifespan=lifespan)
 
 # CORS: el navegador bloquea que React (otro puerto) llame a esta API salvo que la autoricemos.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # puerto por defecto de Vite
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],  # puerto por defecto de Vite
