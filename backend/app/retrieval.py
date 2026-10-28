@@ -5,8 +5,10 @@ El backend NO vuelve a leer los PDFs: lee el índice que dejó el notebook 05 en
 """
 from __future__ import annotations
 
+import logging
 import os
 import re
+import time
 import unicodedata
 from dataclasses import dataclass
 from functools import lru_cache
@@ -16,6 +18,8 @@ import chromadb
 import snowballstemmer
 from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer
+
+log = logging.getLogger("uvicorn.error")   # mismo logger que uvicorn para que los avisos salgan en su consola
 
 # Misma convención que prediction.py: por defecto <repo>/data, con DATA_DIR para sobreescribirlo.
 DATA_DIR = Path(os.getenv("DATA_DIR", Path(__file__).resolve().parents[2] / "data"))
@@ -106,6 +110,20 @@ def _hibrido(ind: Indice, pregunta: str, emb: list[float], k: int, documentos: t
         for pos, i in enumerate(ranking, start=1):
             fusion[i] = fusion.get(i, 0.0) + 1.0 / (k_rrf + pos)
     return sorted(fusion, key=fusion.get, reverse=True)[:k]
+
+
+def calentar() -> None:
+    """Hace una búsqueda de prueba para que la primera pregunta real no pague las inicializaciones diferidas.
+
+    Por qué: cargar_indice() deja listo el modelo y los índices, pero el primer encode/query de verdad tarda segundos
+    (medido: 4,4 s en la primera pregunta vs 0,14 s en la segunda). Nunca lanza: si falla, /chat lo reportará a su manera.
+    """
+    try:
+        t0 = time.perf_counter()
+        buscar("calentamiento")
+        log.info("Retrieval calentado en %.1f s", time.perf_counter() - t0)
+    except Exception as e:  # noqa: BLE001 - el calentamiento es opcional, no debe tumbar el servidor
+        log.warning("No se pudo calentar el retrieval: %s", e)
 
 
 def buscar(pregunta: str) -> list[Fragmento]:
