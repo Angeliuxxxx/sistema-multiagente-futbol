@@ -35,8 +35,12 @@ largo gana («Atlético de Madrid» no cuenta como Real Madrid).
   de hoy `dias_desde_ultimo_partido` valdría ~500, un valor que el modelo nunca vio al entrenar. La respuesta lo dice.
 - La respuesta de predicción es una plantilla (no pasa por LLM) y siempre aclara quién es local.
 
-## Límites conocidos (probados a mano después de la evaluación, sin retocar reglas)
-- «Barcelona vs Madrid» sin verbo de pronóstico → `fuera_de_alcance` (debería ser predicción).
-- «¿Cuántos puntos tiene el Madrid?» → `conocimiento` por la palabra «puntos» (es una estadística que nadie cubre).
-- «¿Quién ganó el clásico de 2011?» → `conocimiento` (el corpus no lo tiene; el RAG responderá que no encontró).
+## Límites conocidos
+- «¿Quién ganó el clásico de 2011?» → `conocimiento` (ruta correcta), pero el corpus no tiene el dato y el agente responde «No encontré esa información…».
 - No se extrae la fecha del texto: solo el campo opcional `fecha` de la petición.
+- Las estadísticas solo se descartan con un equipo y las palabras puntos/goles/tabla/posición; con dos equipos
+  («¿Cuántos goles marcó el Barça al Madrid?») no hay regla y, sin conector ni verbo, cae en `fuera_de_alcance`.
+
+## Ajustes tras la v1 (dev ampliado a 27 casos; heldout congelado como v1)
+Se añadieron R1b («A vs B»/«contra»/guion sin reglamento → predicción) y R4b (un equipo + estadística → fuera de alcance);
+«puntos» a secas dejó de ser señal de reglamento (solo «puntos se dan/por…»).

@@ -65,3 +65,7 @@ fallos en entradas fuera de estos conjuntos; ver «Límites conocidos» en `docs
 
 Latencia por `/preguntar` (qwen2.5:7b, RTX 4050 6 GB, ya calentado): predicción 299 ms, aclarar/fuera 1–3 ms,
 conocimiento 4.018 ms (una medición).
+
+### Orquestador, ajuste v1.1 (02/11/2026)
+dev ampliado con 3 casos hallados a mano: 25/27 con las reglas v1 → **27/27** tras R1b y R4b. heldout (v1, congelado, no se usó
+para decidir nada): **12/12**.
