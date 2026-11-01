@@ -1,0 +1,98 @@
+[
+ {
+  "pregunta": "¿Quién gana el Barcelona contra el Real Madrid?",
+  "ruta_esperada": "prediccion"
+ },
+ {
+  "pregunta": "Predicción Sevilla vs Valencia",
+  "ruta_esperada": "prediccion"
+ },
+ {
+  "pregunta": "¿Cómo ve el Atleti contra el Betis este fin de semana?",
+  "ruta_esperada": "prediccion"
+ },
+ {
+  "pregunta": "Probabilidad de que el Villarreal le gane al Girona",
+  "ruta_esperada": "prediccion"
+ },
+ {
+  "pregunta": "Real Sociedad - Athletic, ¿qué resultado esperas?",
+  "ruta_esperada": "prediccion"
+ },
+ {
+  "pregunta": "¿Quién ganará el próximo clásico?",
+  "ruta_esperada": "prediccion"
+ },
+ {
+  "pregunta": "¿Cuántos suplentes se pueden usar en un partido?",
+  "ruta_esperada": "conocimiento"
+ },
+ {
+  "pregunta": "¿Qué es el fuera de juego?",
+  "ruta_esperada": "conocimiento"
+ },
+ {
+  "pregunta": "¿Cuántos puntos se dan por una victoria?",
+  "ruta_esperada": "conocimiento"
+ },
+ {
+  "pregunta": "Explícame el origen del Clásico entre Barcelona y Real Madrid",
+  "ruta_esperada": "conocimiento"
+ },
+ {
+  "pregunta": "¿Cuántos equipos descienden de Primera División?",
+  "ruta_esperada": "conocimiento"
+ },
+ {
+  "pregunta": "¿Cuándo abre el periodo de inscripción de licencias de invierno?",
+  "ruta_esperada": "conocimiento"
+ },
+ {
+  "pregunta": "¿Va a ganar el Barcelona?",
+  "ruta_esperada": "aclarar"
+ },
+ {
+  "pregunta": "Predicción del próximo partido del Sevilla",
+  "ruta_esperada": "aclarar"
+ },
+ {
+  "pregunta": "¿Cómo le irá al Valencia este fin de semana?",
+  "ruta_esperada": "aclarar"
+ },
+ {
+  "pregunta": "Quiero una predicción para el fin de semana",
+  "ruta_esperada": "aclarar"
+ },
+ {
+  "pregunta": "¿Ganará el Atlético el domingo?",
+  "ruta_esperada": "aclarar"
+ },
+ {
+  "pregunta": "¿Qué probabilidades tiene el Girona de ganar?",
+  "ruta_esperada": "aclarar"
+ },
+ {
+  "pregunta": "¿Cuántos goles ha marcado Messi esta temporada?",
+  "ruta_esperada": "fuera_de_alcance"
+ },
+ {
+  "pregunta": "Hola, ¿cómo estás?",
+  "ruta_esperada": "fuera_de_alcance"
+ },
+ {
+  "pregunta": "¿Qué tiempo hará mañana en Madrid?",
+  "ruta_esperada": "fuera_de_alcance"
+ },
+ {
+  "pregunta": "Dame una receta de paella",
+  "ruta_esperada": "fuera_de_alcance"
+ },
+ {
+  "pregunta": "¿Quién es el máximo goleador histórico del Real Madrid?",
+  "ruta_esperada": "fuera_de_alcance"
+ },
+ {
+  "pregunta": "¿Cuánto cuesta una entrada para el Camp Nou?",
+  "ruta_esperada": "fuera_de_alcance"
+ }
+]

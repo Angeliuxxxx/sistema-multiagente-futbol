@@ -1,0 +1,50 @@
+[
+ {
+  "pregunta": "quien gana hoy, Barça o Madrid?",
+  "ruta_esperada": "prediccion"
+ },
+ {
+  "pregunta": "Pronóstico Atleti-Valencia",
+  "ruta_esperada": "prediccion"
+ },
+ {
+  "pregunta": "Que resultado esperas del Rayo contra el Osasuna?",
+  "ruta_esperada": "prediccion"
+ },
+ {
+  "pregunta": "cuantas sustituciones permite el reglamento",
+  "ruta_esperada": "conocimiento"
+ },
+ {
+  "pregunta": "¿Cuál es la historia del Clásico?",
+  "ruta_esperada": "conocimiento"
+ },
+ {
+  "pregunta": "qué es un saque de esquina?",
+  "ruta_esperada": "conocimiento"
+ },
+ {
+  "pregunta": "¿Y el Betis, va a ganar?",
+  "ruta_esperada": "aclarar"
+ },
+ {
+  "pregunta": "Prediccion para el Celta",
+  "ruta_esperada": "aclarar"
+ },
+ {
+  "pregunta": "¿Gana el Madrid?",
+  "ruta_esperada": "aclarar"
+ },
+ {
+  "pregunta": "Buenas tardes",
+  "ruta_esperada": "fuera_de_alcance"
+ },
+ {
+  "pregunta": "¿Cuántos pases dio Pedri contra el Getafe el año pasado?",
+  "ruta_esperada": "fuera_de_alcance"
+ },
+ {
+  "pregunta": "¿Quién ganó el Mundial de 2022?",
+  "ruta_esperada": "fuera_de_alcance"
+ }
+]
