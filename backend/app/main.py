@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from . import prediction, retrieval
 from .chat import calentar_llm, router as chat_router
+from .orquestador import router as orquestador_router
 
 
 def _calentar() -> None:
@@ -44,6 +45,7 @@ app.add_middleware(
 )
 
 app.include_router(chat_router)
+app.include_router(orquestador_router)
 
 class PredictRequest(BaseModel):
     local: str = Field(examples=["Barcelona"])
