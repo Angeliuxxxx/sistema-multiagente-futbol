@@ -85,9 +85,15 @@ SENAL_PREDICCION = re.compile(
 SENAL_CONOCIMIENTO = re.compile(
     r"\b(suplentes?|sustituci\w+|cambios?|fuera de juego|offside|penal\w*|tarjetas?|amonestaci\w+|expulsi\w+|"
     r"reglas?|reglamento|normas?|articulo|arbitros?|var|saque\w*|corner|esquina|descien\w+|ascen\w+|asciende\w*|"
-    r"puntos?|desempat\w+|licencias?|inscri\w+|extranjeros?|comunitari\w+|duracion|dura|horarios?|jornadas?|"
+    r"puntos? (?:se |por |que )?(?:dan|otorga\w*|conceden|por)|desempat\w+|licencias?|inscri\w+|extranjeros?|comunitari\w+|duracion|dura|horarios?|jornadas?|"
     r"prorroga|falta|faltas|balon|clasico|historia|origen|fundad\w+|primera division|segunda division|laliga|la liga)\b")
 CLASICO = re.compile(r"\bclasico\b")
+# Estadísticas de un equipo (puntos que lleva, goles, tabla): ningún agente las tiene, el corpus es de reglamento y
+# el modelo solo predice partidos. 'puntos' a secas ya NO cuenta como reglamento (arriba solo 'puntos se dan/por…').
+SENAL_ESTADISTICA = re.compile(r"\b(puntos|goles|tabla|posicion|posiciones)\b")
+# Dos equipos unidos por vs / contra / guion ('Barcelona vs Madrid') es el formato típico de un partido, aunque no
+# haya verbo de pronóstico. Se busca sobre el texto ORIGINAL en minúsculas porque _plano convierte el guion en espacio.
+CONECTOR_PARTIDO = re.compile(r"\b(?:vs|v/s|contra)\b|\s[-–—]\s")
 
 
 @dataclass
@@ -110,6 +116,11 @@ def enrutar(pregunta: str, equipos_validos: list[str] | None = None) -> Decision
     if len(equipos) >= 2 and pred:
         return Decision("prediccion", f"Mencionas dos equipos ({equipos[0]} y {equipos[1]}) y pides un pronóstico.", equipos[:2])
 
+    # R1b: dos equipos unidos por vs/contra/guion y SIN vocabulario de reglamento -> el formato 'A vs B' ya es un partido.
+    # Sin 'conoc' para no robarle a R5 casos como 'tarjetas del Barça contra el Madrid'.
+    if len(equipos) >= 2 and not conoc and CONECTOR_PARTIDO.search(pregunta.lower()):
+        return Decision("prediccion", f"Nombras un partido ({equipos[0]} contra {equipos[1]}).", equipos[:2])
+
     # R2: 'el clásico' implica Barcelona-Real Madrid aunque no se nombren; solo si hay señal de predicción
     # ('¿cuándo fue el primer clásico?' es historia y cae en R5).
     if CLASICO.search(texto) and pred and len(equipos) < 2:
@@ -124,6 +135,11 @@ def enrutar(pregunta: str, equipos_validos: list[str] | None = None) -> Decision
     # ganar'), se deja pasar a R5: es una duda de reglas, no un pronóstico.
     if pred and not conoc:
         return Decision("aclarar", "Pides un pronóstico pero no indicas ningún equipo.", [])
+
+    # R4b: un equipo + estadística ('puntos del Madrid') y sin reglamento -> nadie la cubre. Va antes de R5 para que
+    # ninguna palabra suelta (puntos, tabla) mande una estadística al RAG, que contestaría "no encontré" tras 4 s de LLM.
+    if len(equipos) == 1 and SENAL_ESTADISTICA.search(texto) and not conoc:
+        return Decision("fuera_de_alcance", f"Pides una estadística de {equipos[0]}, que ningún agente tiene.", equipos)
 
     # R5: vocabulario de reglamento, liga o historia -> RAG. Con o sin equipos: 'origen del Clásico entre
     # Barcelona y Real Madrid' nombra dos equipos pero NO pide predicción.
