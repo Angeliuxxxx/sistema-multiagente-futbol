@@ -39,7 +39,8 @@ app = FastAPI(title="Analítica LaLiga — Sistema Multiagente", version="0.1.0"
 # CORS: el navegador bloquea que React (otro puerto) llame a esta API salvo que la autoricemos.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # puerto por defecto de Vite
+    # Puerto por defecto de Vite. Se listan localhost Y 127.0.0.1: para CORS son orígenes distintos aunque sean la misma máquina.
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -156,6 +156,34 @@ class PreguntarRequest(BaseModel):
     fecha: date | None = Field(None, description="Fecha del partido a predecir. Por defecto, justo después del último dato disponible.")
 
 
+class Probabilidades(BaseModel):
+    # Nombres cortos para la interfaz; prediction.py usa victoria_local/victoria_visitante y se traduce en un solo sitio.
+    local: float = Field(..., description="Probabilidad de victoria local (0-1)")
+    empate: float = Field(..., description="Probabilidad de empate (0-1)")
+    visitante: float = Field(..., description="Probabilidad de victoria visitante (0-1)")
+
+
+class FormaEquipo(BaseModel):
+    """Las 6 features de forma de UN equipo (las home_/away_ del modelo, sin el prefijo)."""
+    forma_goles_favor: float
+    forma_goles_contra: float
+    forma_xg: float
+    forma_puntos: float
+    forma_ppda: float
+    dias_desde_ultimo_partido: float
+
+
+class PrediccionDetalle(BaseModel):
+    """Predicción estructurada para que la interfaz dibuje barras y gráficas sin interpretar el texto de `respuesta`."""
+    local: str
+    visitante: str
+    probabilidades: Probabilidades
+    fecha_forma: str = Field(..., description="La forma se calculó con los 5 partidos anteriores a esta fecha")
+    datos_hasta: str = Field(..., description="Fecha del último dato disponible")
+    forma_local: FormaEquipo
+    forma_visitante: FormaEquipo
+
+
 class PreguntarResponse(BaseModel):
     respuesta: str
     ruta: Ruta = Field(..., description="Qué decidió el orquestador")
@@ -166,10 +194,11 @@ class PreguntarResponse(BaseModel):
     fuentes: list[FuenteCitada] = Field(default_factory=list, description="Documento y página, solo en conocimiento")
     probabilidades: dict[str, float] | None = Field(None, description="Solo en predicción")
     datos_hasta: str | None = Field(None, description="Fecha del último dato con que se calculó la forma (solo en predicción)")
+    prediccion: PrediccionDetalle | None = Field(None, description="Detalle estructurado; solo cuando la ruta es prediccion")
     ms_total: int
 
 
-def _responder_prediccion(local: str, visitante: str, fecha: date | None) -> tuple[str, dict[str, float], str]:
+def _responder_prediccion(local: str, visitante: str, fecha: date | None) -> tuple[str, PrediccionDetalle]:
     # Los datos terminan en `datos_hasta`. Si el usuario no da fecha se predice el día SIGUIENTE al último dato:
     # con la fecha de hoy el modelo vería ~500 días sin jugar (dias_desde_ultimo_partido), algo fuera de lo que aprendió.
     ultimo = prediction.cargar_team_matches()["date"].max().normalize()
@@ -184,7 +213,11 @@ def _responder_prediccion(local: str, visitante: str, fecha: date | None) -> tup
     texto = (f"Predicción {local} (local) vs {visitante} (visitante), {cuando}: "
              f"victoria de {local} {pct('victoria_local')}, empate {pct('empate')}, victoria de {visitante} {pct('victoria_visitante')}. "
              f"Tomé como local al primer equipo que nombraste.")
-    return texto, p, r["datos_hasta"]
+    detalle = PrediccionDetalle(
+        local=local, visitante=visitante, fecha_forma=r["fecha"], datos_hasta=r["datos_hasta"],
+        probabilidades=Probabilidades(local=p["victoria_local"], empate=p["empate"], visitante=p["victoria_visitante"]),
+        forma_local=FormaEquipo(**r["forma_local"]), forma_visitante=FormaEquipo(**r["forma_visitante"]))
+    return texto, detalle
 
 
 @router.post("/preguntar", response_model=PreguntarResponse, summary="Pregunta en lenguaje natural (orquestador)")
@@ -196,8 +229,10 @@ def preguntar(req: PreguntarRequest) -> PreguntarResponse:
     ms = lambda: round((time.perf_counter() - t0) * 1000)   # noqa: E731
 
     if d.ruta == "prediccion":
-        texto, probs, hasta = _responder_prediccion(d.equipos[0], d.equipos[1], req.fecha)
-        return PreguntarResponse(respuesta=texto, fuente="agente_predictivo", probabilidades=probs, datos_hasta=hasta,
+        texto, det = _responder_prediccion(d.equipos[0], d.equipos[1], req.fecha)
+        return PreguntarResponse(respuesta=texto, fuente="agente_predictivo", prediccion=det, datos_hasta=det.datos_hasta,
+                                 probabilidades={"victoria_local": det.probabilidades.local, "empate": det.probabilidades.empate,
+                                                 "victoria_visitante": det.probabilidades.visitante},
                                  ms_total=ms(), **base)
     if d.ruta == "conocimiento":
         r = responder_conocimiento(req.pregunta)
