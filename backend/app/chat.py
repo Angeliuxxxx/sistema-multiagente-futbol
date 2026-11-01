@@ -113,18 +113,18 @@ def _fuentes_usadas(respuesta: str, fragmentos: list[Fragmento]) -> list[Fragmen
     return [fragmentos[n - 1] for n in vistos] or fragmentos
 
 
-@router.post("/chat", response_model=ChatResponse, summary="Pregunta sobre reglamento (agente de conocimiento)")
-def chat(req: ChatRequest) -> ChatResponse:
-    # `def` y no `async def`: buscar() y el LLM bloquean; FastAPI corre las funciones normales en un hilo aparte.
+def responder_conocimiento(pregunta: str) -> ChatResponse:
+    """RAG completo (búsqueda + LLM + fuentes). Lo usan /chat y el orquestador, para que haya UNA sola implementación."""
+    # Lanza HTTPException(503) si falta el índice o Ollama no responde: ambos llamadores corren dentro de FastAPI.
     t0 = time.perf_counter()
     try:
-        fragmentos = buscar(req.pregunta)
+        fragmentos = buscar(pregunta)
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
     t1 = time.perf_counter()
 
     mensajes = [SystemMessage(content=SISTEMA),
-                HumanMessage(content=f"FRAGMENTOS:\n{_contexto(fragmentos)}\n\nPREGUNTA: {req.pregunta}")]
+                HumanMessage(content=f"FRAGMENTOS:\n{_contexto(fragmentos)}\n\nPREGUNTA: {pregunta}")]
     try:
         respuesta = str(crear_llm().invoke(mensajes).content).strip()
     except Exception as e:  # noqa: BLE001 - cualquier fallo de conexión/modelo se reporta igual al cliente
@@ -135,3 +135,9 @@ def chat(req: ChatRequest) -> ChatResponse:
                             pagina=f.pagina or None, texto=f.texto) for f in _fuentes_usadas(respuesta, fragmentos)]
     return ChatResponse(respuesta=respuesta, fuentes=fuentes,
                         ms_busqueda=round((t1 - t0) * 1000), ms_llm=round((t2 - t1) * 1000))
+
+
+@router.post("/chat", response_model=ChatResponse, summary="Pregunta sobre reglamento (agente de conocimiento)")
+def chat(req: ChatRequest) -> ChatResponse:
+    # `def` y no `async def`: buscar() y el LLM bloquean; FastAPI corre las funciones normales en un hilo aparte.
+    return responder_conocimiento(req.pregunta)
