@@ -165,10 +165,11 @@ class PreguntarResponse(BaseModel):
     equipos: list[str] = Field(default_factory=list, description="Equipos detectados; el primero se toma como local")
     fuentes: list[FuenteCitada] = Field(default_factory=list, description="Documento y página, solo en conocimiento")
     probabilidades: dict[str, float] | None = Field(None, description="Solo en predicción")
+    datos_hasta: str | None = Field(None, description="Fecha del último dato con que se calculó la forma (solo en predicción)")
     ms_total: int
 
 
-def _responder_prediccion(local: str, visitante: str, fecha: date | None) -> tuple[str, dict[str, float]]:
+def _responder_prediccion(local: str, visitante: str, fecha: date | None) -> tuple[str, dict[str, float], str]:
     # Los datos terminan en `datos_hasta`. Si el usuario no da fecha se predice el día SIGUIENTE al último dato:
     # con la fecha de hoy el modelo vería ~500 días sin jugar (dias_desde_ultimo_partido), algo fuera de lo que aprendió.
     ultimo = prediction.cargar_team_matches()["date"].max().normalize()
@@ -177,12 +178,13 @@ def _responder_prediccion(local: str, visitante: str, fecha: date | None) -> tup
     p = r["probabilidades"]
     pct = lambda k: f"{p[k] * 100:.1f} %"   # noqa: E731
     cuando = f"con la forma de sus últimos 5 partidos antes del {r['fecha']}"
-    if not fecha:
-        cuando += f" (la forma más reciente disponible; los datos terminan el {r['datos_hasta']}, no es la forma de hoy)"
+    # Se avisa SIEMPRE de dónde terminan los datos, también si el usuario dio fecha: una fecha posterior usaría la misma forma vieja.
+    cuando += (f" (la forma más reciente disponible; los datos terminan el {r['datos_hasta']}, no es la forma de hoy)"
+               if not fecha else f" (los datos terminan el {r['datos_hasta']}; una fecha posterior usa esa misma forma)")
     texto = (f"Predicción {local} (local) vs {visitante} (visitante), {cuando}: "
              f"victoria de {local} {pct('victoria_local')}, empate {pct('empate')}, victoria de {visitante} {pct('victoria_visitante')}. "
              f"Tomé como local al primer equipo que nombraste.")
-    return texto, p
+    return texto, p, r["datos_hasta"]
 
 
 @router.post("/preguntar", response_model=PreguntarResponse, summary="Pregunta en lenguaje natural (orquestador)")
@@ -194,8 +196,9 @@ def preguntar(req: PreguntarRequest) -> PreguntarResponse:
     ms = lambda: round((time.perf_counter() - t0) * 1000)   # noqa: E731
 
     if d.ruta == "prediccion":
-        texto, probs = _responder_prediccion(d.equipos[0], d.equipos[1], req.fecha)
-        return PreguntarResponse(respuesta=texto, fuente="agente_predictivo", probabilidades=probs, ms_total=ms(), **base)
+        texto, probs, hasta = _responder_prediccion(d.equipos[0], d.equipos[1], req.fecha)
+        return PreguntarResponse(respuesta=texto, fuente="agente_predictivo", probabilidades=probs, datos_hasta=hasta,
+                                 ms_total=ms(), **base)
     if d.ruta == "conocimiento":
         r = responder_conocimiento(req.pregunta)
         return PreguntarResponse(respuesta=r.respuesta, fuente="agente_conocimiento", fuentes=r.fuentes, ms_total=ms(), **base)
