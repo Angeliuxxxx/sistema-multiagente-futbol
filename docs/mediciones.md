@@ -30,7 +30,7 @@ superara, Ollama lo trunca en silencio: hay que volver a medir si se sube `k` o 
 | qwen2.5:3b | 1.347 ms | 7/11 |
 
 El 3B es ~2× más rápido pero falla más y a veces responde solo con las citas (`[1] [2] [3]`) sin texto. Ambos
-cumplen la meta de < 5 s en la mayoría de preguntas; el 7B pasa de 5 s en conmoción cerebral y desempate (5,2–6,0 s).
+cumplen la meta de < 5 s en la mayoría de preguntas; el 7B roza o pasa los 5 s en conmoción cerebral y desempate (4,9–6,0 s).
 
 ## Evaluaciones de recuperación y respuesta (01/11/2026)
 

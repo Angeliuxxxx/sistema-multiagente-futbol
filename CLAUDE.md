@@ -25,6 +25,7 @@ Backend FastAPI, frontend React (chat + dashboard), ChromaDB, LangChain. Una sol
 - RAG: ChromaDB con métrica coseno; embeddings `paraphrase-multilingual-MiniLM-L12-v2`
   (límite ~128 tokens: chunks de ≤500 caracteres). Metadata por chunk: `documento`, `seccion`, `pagina`, `division`.
 - Corpus: Normas de Competición Primera/Segunda 2026/27, Reglas de Juego IFAB 2026/27 y 2 PDFs de Wikipedia.
+- Alcance: solo LaLiga Primera División. Los artículos de Segunda de las Normas (`division == "segunda"`) se excluyen de la recuperación (embeddings y BM25) salvo que la pregunta mencione "segunda", porque Art. 10 (Primera) y Art. 17 (Segunda) son casi idénticos y el segundo contaminaba las respuestas de desempate.
 - LLM: Ollama `qwen2.5:7b` en desarrollo, siempre detrás de la interfaz de LangChain para poder cambiarlo
   con una línea. Decisión de LLM para el despliegue: pendiente.
 
