@@ -51,7 +51,7 @@ app.include_router(orquestador_router)
 class PredictRequest(BaseModel):
     local: str = Field(examples=["Barcelona"])
     visitante: str = Field(examples=["Real Madrid"])
-    fecha: date | None = Field(default=None, description="Por defecto, hoy.")
+    fecha: date | None = Field(default=None, description="Por defecto, el día siguiente al último dato disponible (ver `datos_hasta`).")
 
 
 class PredictResponse(BaseModel):

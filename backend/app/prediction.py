@@ -55,8 +55,10 @@ def ultima_forma(equipo: str, fecha: pd.Timestamp, team_matches: pd.DataFrame) -
 def predecir_partido(local: str, visitante: str, fecha: pd.Timestamp | None = None) -> dict:
     if local == visitante:
         raise ValueError("El equipo local y el visitante deben ser distintos.")
-    fecha = fecha if fecha is not None else pd.Timestamp.today().normalize()
     tm, modelo = cargar_team_matches(), cargar_modelo()
+    # Sin fecha: el día SIGUIENTE al último dato, no hoy. Con hoy, dias_desde_ultimo_partido valdría ~500 (los datos
+    # terminan en 2025-05-25), un valor que el modelo nunca vio al entrenar. Es el mismo criterio que usa /preguntar.
+    fecha = fecha if fecha is not None else tm["date"].max().normalize() + pd.Timedelta(days=1)
 
     forma = {}
     for rol, equipo in (("home", local), ("away", visitante)):
