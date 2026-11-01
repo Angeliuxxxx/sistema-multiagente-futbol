@@ -48,3 +48,20 @@ cumplen la meta de < 5 s en la mayoría de preguntas; el 7B roza o pasa los 5 s 
     y el modelo responde correctamente «No encontré esa información». Es un fallo de recuperación, no del LLM.
   - «¿Cuántos suplentes…?»: sí llega «doce futbolistas» (pos. 2), pero el modelo contesta «cinco» (los cinco
     sustitutos del Art. 25 y de la Regla 3). Es un fallo de generación; la pregunta es ambigua (suplentes inscritos vs. sustituciones).
+
+## Orquestador (02/11/2026)
+
+Router por reglas (`app/orquestador.py`), sin LLM. Casos en `backend/scripts/datos_orquestador/`; los 36 casos se
+redactaron y commitearon **antes** de escribir el router.
+
+| Conjunto | Aciertos | Por ruta (predicción / conocimiento / aclarar / fuera) |
+|---|---|---|
+| dev (24) | 24/24 | 6/6 · 6/6 · 6/6 · 6/6 |
+| heldout (12), ejecutado una vez | 12/12 | 3/3 · 3/3 · 3/3 · 3/3 |
+
+Matriz de confusión diagonal en ambos. Lectura prudente: los conjuntos son pequeños y los redactó la misma persona que
+las reglas, así que 100 % no es una garantía de generalización. Pruebas manuales posteriores (sin retocar reglas) mostraron
+fallos en entradas fuera de estos conjuntos; ver «Límites conocidos» en `docs/diseno_orquestador.md`.
+
+Latencia por `/preguntar` (qwen2.5:7b, RTX 4050 6 GB, ya calentado): predicción 299 ms, aclarar/fuera 1–3 ms,
+conocimiento 4.018 ms (una medición).
