@@ -22,3 +22,10 @@ Alternativas descartadas:
 - **Mezclar fuentes** (histórico Understat + partidos recientes de otra): el modelo usa `forma_xg` y `forma_ppda`; sin esas
   columnas en los datos nuevos habría que reentrenar sin ellas, lo que reabre la decisión de las 12 features y cambia el
   modelo ya evaluado.
+
+## Limitaciones y trabajo futuro
+- Los pronósticos usan la forma de los últimos 5 partidos **a mayo de 2025** (último dato: 2025-05-25). No reflejan fichajes,
+  lesiones ni resultados posteriores; para una fecha actual el modelo extrapola desde una forma antigua.
+- Equipos que no jugaron en Primera en 2024/25 (p. ej. Cádiz, Almería, Granada) tienen su forma de temporadas anteriores.
+- Actualizar exigiría una fuente **con licencia** que incluya xG y PPDA (así no cambian las 12 features ni hay que reentrenar
+  por faltar columnas). Si aparece, bastaría regenerar `team_matches.csv` y, solo si cambia la distribución, reentrenar.
