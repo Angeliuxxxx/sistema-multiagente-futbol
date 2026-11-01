@@ -56,7 +56,8 @@ class Indice:
     col: chromadb.Collection
     modelo: SentenceTransformer
     chunks: list[dict]  # la posición i corresponde al id "c{i}" de Chroma
-    bm25: dict[tuple[str, ...], tuple[list[int], BM25Okapi]]  # un índice BM25 por fuente, creado la primera vez
+    # un índice BM25 por (fuente, ¿sin Segunda?), creado la primera vez
+    bm25: dict[tuple[tuple[str, ...], bool], tuple[list[int], BM25Okapi]]
 
 
 def tokenizar(t: str) -> list[str]:
@@ -78,29 +79,46 @@ def cargar_indice() -> Indice:
     assert [int(datos["ids"][j][1:]) for j in orden] == list(range(len(orden))), "ids de Chroma no contiguos"
     chunks = [dict(texto=datos["documents"][j], **datos["metadatas"][j]) for j in orden]
     ind = Indice(col=col, modelo=SentenceTransformer(MODELO_EMBEDDINGS), chunks=chunks, bm25={})
-    for documentos, _ in CUPOS:   # los 3 índices BM25 se construyen ahora, no en la primera pregunta (costaba ~3 s)
-        _bm25_de(ind, documentos)
+    for documentos, _ in CUPOS:   # los índices BM25 por defecto se construyen ahora, no en la primera pregunta (~3 s)
+        _bm25_de(ind, documentos, _excluye_segunda(documentos, incluir_segunda=False))
     return ind
 
 
-def _bm25_de(ind: Indice, documentos: tuple[str, ...]) -> tuple[list[int], BM25Okapi]:
+def pide_segunda(pregunta: str) -> bool:
+    """¿La pregunta menciona Segunda División? Es el único caso en que se consultan los artículos de Segunda."""
+    return "segunda" in pregunta.lower()
+
+
+def _excluye_segunda(documentos: tuple[str, ...], incluir_segunda: bool) -> bool:
+    # Solo Normas de Competición tiene artículos por división; en las demás fuentes `division` está vacía y no hay nada que quitar.
+    return not incluir_segunda and "normas_competicion" in documentos
+
+
+def _bm25_de(ind: Indice, documentos: tuple[str, ...], sin_segunda: bool) -> tuple[list[int], BM25Okapi]:
     # IDF por fuente: "qué tan rara es una palabra" se mide dentro de la fuente que se está consultando.
-    if documentos not in ind.bm25:
-        idx = [i for i, c in enumerate(ind.chunks) if c["documento"] in documentos]
-        ind.bm25[documentos] = (idx, BM25Okapi([tokenizar(ind.chunks[i]["texto"]) for i in idx]))
-    return ind.bm25[documentos]
+    # El filtro va en la clave: el índice sin Segunda tiene otro conjunto de chunks (y otro IDF) que el completo.
+    clave = (documentos, sin_segunda)
+    if clave not in ind.bm25:
+        idx = [i for i, c in enumerate(ind.chunks)
+               if c["documento"] in documentos and not (sin_segunda and c.get("division") == "segunda")]
+        ind.bm25[clave] = (idx, BM25Okapi([tokenizar(ind.chunks[i]["texto"]) for i in idx]))
+    return ind.bm25[clave]
 
 
 # candidatos = 30: con 20, el chunk de "doce futbolistas" (Art. 25) quedaba en el puesto 21 de embeddings y no
 # entraba en la fusión. Barrido 20/30/40/60: 30 es el menor valor que lo recupera (evaluar_frases 9/11 -> 10/11),
 # mantiene evaluar_recuperacion en 16/17 y no cambia la latencia (~70 ms); 40 y 60 no ganan nada más.
 def _hibrido(ind: Indice, pregunta: str, emb: list[float], k: int, documentos: tuple[str, ...],
-             candidatos: int = 30, k_rrf: int = 60) -> list[int]:
+             incluir_segunda: bool = False, candidatos: int = 30, k_rrf: int = 60) -> list[int]:
     """Devuelve las posiciones de los k mejores chunks de una fuente, fusionando embeddings y BM25 con RRF."""
-    r = ind.col.query(query_embeddings=[emb], n_results=candidatos, where={"documento": {"$in": list(documentos)}})
+    sin_segunda = _excluye_segunda(documentos, incluir_segunda)
+    donde: dict = {"documento": {"$in": list(documentos)}}
+    if sin_segunda:   # misma exclusión en las dos ramas: si solo una la aplicara, la otra reintroduciría Segunda en la fusión
+        donde = {"$and": [donde, {"division": {"$ne": "segunda"}}]}
+    r = ind.col.query(query_embeddings=[emb], n_results=candidatos, where=donde)
     denso = [int(i[1:]) for i in r["ids"][0]]                      # "c123" -> 123
 
-    idx, bm = _bm25_de(ind, documentos)
+    idx, bm = _bm25_de(ind, documentos, sin_segunda)
     sc = bm.get_scores(tokenizar(pregunta))
     lexico = [idx[j] for j in sorted((j for j in range(len(idx)) if sc[j] > 0), key=lambda j: -sc[j])][:candidatos]
 
@@ -127,13 +145,19 @@ def calentar() -> None:
 
 
 def buscar(pregunta: str) -> list[Fragmento]:
-    """Los fragmentos del corpus que mejor responden la pregunta: 3 de Normas, 3 de Reglas y 2 de Wikipedia."""
+    """Los fragmentos del corpus que mejor responden la pregunta: 3 de Normas, 3 de Reglas y 2 de Wikipedia.
+
+    Alcance: la aplicación trata de Primera División, así que los artículos de Normas exclusivos de Segunda solo
+    entran si la pregunta menciona "segunda". Por qué: mezclados con los de Primera confunden al LLM (p. ej. el
+    desempate de Segunda, Art. 17, aparece al preguntar por el desempate de Primera).
+    """
     ind = cargar_indice()
+    incluir_segunda = pide_segunda(pregunta)
     # Se vectoriza la pregunta UNA vez y se reutiliza en las tres fuentes (hacerlo tres veces triplicaría la latencia).
     emb = ind.modelo.encode([pregunta])[0].tolist()
     salida: list[Fragmento] = []
     for documentos, cupo in CUPOS:
-        for i in _hibrido(ind, pregunta, emb, cupo, documentos):
+        for i in _hibrido(ind, pregunta, emb, cupo, documentos, incluir_segunda):
             c = ind.chunks[i]
             salida.append(Fragmento(texto=c["texto"], documento=c["documento"], seccion=c["seccion"],
                                     pagina=int(c["pagina"])))
