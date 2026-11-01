@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { preguntar } from '../api.js'
 
+// Nombres legibles de las rutas. Solo es presentación: los valores que devuelve la API no cambian.
+// Si llega una ruta nueva que no está aquí, se muestra tal cual en vez de romper.
+const NOMBRE_RUTA = {
+  prediccion: 'Predicción',
+  conocimiento: 'Conocimiento',
+  aclarar: 'Necesito más datos',
+  fuera_de_alcance: 'Fuera de alcance',
+}
+
 // Una de cada tipo de ruta, para que quien abre la app vea qué sabe hacer el sistema sin adivinar.
 const EJEMPLOS = [
   '¿Cuántos suplentes se pueden usar en un partido?',
@@ -55,7 +64,7 @@ function Burbuja({ m, onMostrarPanel }) {
         <details>
           <summary>¿Por qué esta ruta?</summary>
           <p>
-            <strong>Ruta:</strong> {m.ruta}
+            <strong>Ruta:</strong> {NOMBRE_RUTA[m.ruta] ?? m.ruta}
             <br />
             <strong>Motivo:</strong> {m.motivo}
           </p>
