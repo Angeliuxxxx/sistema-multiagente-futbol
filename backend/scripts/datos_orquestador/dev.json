@@ -94,5 +94,17 @@
  {
   "pregunta": "¿Cuánto cuesta una entrada para el Camp Nou?",
   "ruta_esperada": "fuera_de_alcance"
+ },
+ {
+  "pregunta": "Barcelona vs Madrid",
+  "ruta_esperada": "prediccion"
+ },
+ {
+  "pregunta": "¿Cuántos puntos tiene el Madrid?",
+  "ruta_esperada": "fuera_de_alcance"
+ },
+ {
+  "pregunta": "¿Quién ganó el clásico de 2011?",
+  "ruta_esperada": "conocimiento"
  }
 ]
