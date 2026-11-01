@@ -24,6 +24,15 @@ CASOS = [
 ]
 
 
+# Alcance (solo Primera salvo que la pregunta mencione "segunda"). Art. 10 (Primera) y Art. 17 (Segunda) son casi idénticos,
+# así que el desempate es el caso donde se nota. Formato: (pregunta, frase, sección que DEBE aparecer, sección que NO debe aparecer)
+CASOS_ALCANCE = [
+    ("¿Cómo se desempata en Segunda División si dos equipos terminan con los mismos puntos?",
+     "partidos disputados entre ellos", "Art. 17", None),
+    ("¿Cómo se desempata si dos equipos terminan con los mismos puntos?", None, None, "Art. 17"),
+]
+
+
 def _norm(t: str) -> str:
     return " ".join(t.split())  # el PDF parte líneas: comparamos sin saltos ni dobles espacios
 
@@ -36,7 +45,16 @@ def evaluar(buscar_fn=buscar, nombre: str = "retrieval.buscar") -> int:
         aciertos += pos is not None
         print(f"{'✔ pos ' + str(pos) if pos else '✘      '} | {pregunta}")
     print(f"\n{nombre}: frase clave en los {len(frags)} fragmentos -> {aciertos}/{len(CASOS)}")
-    return aciertos
+
+    ok_alcance = 0
+    for pregunta, frase, debe, no_debe in CASOS_ALCANCE:
+        frags = buscar_fn(pregunta)
+        ok = (debe is None or any(debe in f.seccion and frase in _norm(f.texto) for f in frags)) \
+            and not (no_debe and any(no_debe in f.seccion for f in frags))
+        ok_alcance += ok
+        print(f"{'✔' if ok else '✘'} alcance | {pregunta}")
+    print(f"{nombre}: casos de alcance -> {ok_alcance}/{len(CASOS_ALCANCE)}")
+    return aciertos + ok_alcance
 
 
 if __name__ == "__main__":
