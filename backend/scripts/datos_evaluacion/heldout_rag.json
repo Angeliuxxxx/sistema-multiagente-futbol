@@ -1,0 +1,144 @@
+{
+  "descripcion": "Held-out de RAG: 10 preguntas sobre artículos/reglas que NO se usaron para afinar el recuperador, el prompt ni el alcance. Se ejecuta UNA vez al final; no se usa para decidir nada. La frase_clave está verificada literalmente (espacios normalizados) contra un chunk del índice chroma_index_v2 de esa sección.",
+  "usados_para_afinar": {
+    "normas_competicion": [
+      "Art. 6",
+      "Art. 7",
+      "Art. 8",
+      "Art. 10",
+      "Art. 17",
+      "Art. 22",
+      "Art. 23",
+      "Art. 25",
+      "Art. 31",
+      "Art. 34"
+    ],
+    "reglas_juego": [
+      "Regla 7",
+      "Regla 11",
+      "Regla 12",
+      "Regla 14",
+      "Regla 17",
+      "Protocolo del VAR"
+    ],
+    "clasico": [
+      "El Clásico (Wikipedia)"
+    ]
+  },
+  "casos": [
+    {
+      "pregunta": "¿Cuántos jugadores como mínimo debe tener un equipo para que el partido comience o continúe?",
+      "documento": "reglas_juego",
+      "seccion": "Regla 3",
+      "frase_clave": "menos de siete jugadores",
+      "pagina": 63,
+      "hechos": [
+        "siete",
+        "7"
+      ]
+    },
+    {
+      "pregunta": "¿Cuánto debe pesar un balón de fútbol al comienzo del partido?",
+      "documento": "reglas_juego",
+      "seccion": "Regla 2",
+      "frase_clave": "entre 410 y 450 g",
+      "pagina": 59,
+      "hechos": [
+        "410",
+        "450"
+      ]
+    },
+    {
+      "pregunta": "¿Cuánto puede durar como máximo cada periodo de tiempo suplementario?",
+      "documento": "reglas_juego",
+      "seccion": "Regla 10",
+      "frase_clave": "no excedan los 15 minutos cada uno",
+      "pagina": 111,
+      "hechos": [
+        "15 minutos",
+        "quince"
+      ]
+    },
+    {
+      "pregunta": "¿A qué distancia mínima del balón deben estar los adversarios en un tiro libre?",
+      "documento": "reglas_juego",
+      "seccion": "Regla 13",
+      "frase_clave": "como mínimo a 9.15 m",
+      "pagina": 142,
+      "hechos": [
+        "9.15",
+        "9,15",
+        "10 yardas",
+        "10 yd"
+      ]
+    },
+    {
+      "pregunta": "¿A qué distancia deben colocarse los adversarios en un saque de banda?",
+      "documento": "reglas_juego",
+      "seccion": "Regla 15",
+      "frase_clave": "una distancia mínima de 2 m",
+      "pagina": 153,
+      "hechos": [
+        "2 m",
+        "2 metros",
+        "dos metros"
+      ]
+    },
+    {
+      "pregunta": "¿De cuántos segundos dispone un equipo para ejecutar un saque de meta antes de que se conceda un saque de esquina al rival?",
+      "documento": "reglas_juego",
+      "seccion": "Regla 16",
+      "frase_clave": "cuenta atrás de cinco segundos",
+      "pagina": 157,
+      "hechos": [
+        "cinco",
+        "5 segundos"
+      ]
+    },
+    {
+      "pregunta": "¿Qué altura debe tener el dorsal en la parte trasera de la camiseta?",
+      "documento": "normas_competicion",
+      "seccion": "Art. 28",
+      "frase_clave": "25 centímetros de altura",
+      "pagina": 17,
+      "hechos": [
+        "25"
+      ]
+    },
+    {
+      "pregunta": "¿Qué pasa con un club filial si su club patrocinador desciende a la categoría del filial?",
+      "documento": "normas_competicion",
+      "seccion": "Art. 9",
+      "frase_clave": "descenderá a la categoría inmediatamente inferior",
+      "pagina": 6,
+      "hechos": [
+        "inmediatamente inferior",
+        "categoria inferior",
+        "categoría inferior"
+      ]
+    },
+    {
+      "pregunta": "¿Quién entrega el trofeo de Campeón de Primera División?",
+      "documento": "normas_competicion",
+      "seccion": "Art. 12",
+      "frase_clave": "entregado por la Real Federación Española de Fútbol",
+      "pagina": 7,
+      "hechos": [
+        "real federacion",
+        "rfef"
+      ]
+    },
+    {
+      "pregunta": "¿Qué ocurre con un club excluido de la competición por doble incomparecencia?",
+      "documento": "normas_competicion",
+      "seccion": "Art. 11",
+      "frase_clave": "ocupará el último lugar de la clasificación, con cero puntos",
+      "pagina": 7,
+      "hechos": [
+        "ultimo lugar",
+        "último lugar",
+        "cero puntos"
+      ]
+    }
+  ]
+}
