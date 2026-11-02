@@ -69,3 +69,36 @@ conocimiento 4.018 ms (una medición).
 ### Orquestador, ajuste v1.1 (02/11/2026)
 dev ampliado con 3 casos hallados a mano: 25/27 con las reglas v1 → **27/27** tras R1b y R4b. heldout (v1, congelado, no se usó
 para decidir nada): **12/12**.
+
+## Desfase de `dias_desde_ultimo_partido` (02/11/2026)
+
+Script: `backend/scripts/auditar_dias_descanso.py` (no reentrena nada; usa el modelo y los CSV tal cual).
+Problema: al entrenar la feature resta horas de inicio reales; en inferencia la fecha llegaba a las 00:00 y salía 1 día menos
+en ~57 % de los casos (training-serving skew).
+
+**(a) Hora de inicio** (4.180 partidos): mediana **17:30**, moda **20:00** (solo 14,4 % de los partidos; después 17:30, 19:00,
+15:15, 12:00, 13:00). `df_final_features` coincide al 100 % con `diff().dt.days` sobre `team_matches`.
+
+**(b) Feature simulada vs. la de entrenamiento** (8.360 − 31 filas equipo-partido con partido previo):
+| Hora por defecto | MAE (días) | Coincidencia exacta | Sesgo medio |
+|---|---|---|---|
+| **17:30 (mediana)** | **0,282** | **71,8 %** | −0,07 |
+| 19:00 | 0,294 | 70,6 % | +0,09 |
+| 20:00 (moda) | 0,378 | 62,2 % | +0,30 |
+| 00:00 (comportamiento anterior) | 0,567 | 43,3 % | −0,57 |
+
+Barrido por hora entera: el máximo está en 18 h (72 %); 17 h–19 h quedan en 69–72 %, así que la elección no es crítica.
+
+**(c) Log-loss en prueba** (1.140 partidos, ≥ 2022-08-01):
+| Feature | Log-loss |
+|---|---|
+| Original (entrenamiento) | 1,0513 |
+| Simulada 17:30 | 1,0514 |
+| Simulada 19:00 | 1,0516 |
+| Simulada 20:00 | 1,0519 |
+| Simulada 00:00 | 1,0509 |
+
+Lectura honesta: el modelo es **poco sensible** a este desfase (diferencias ≤ 0,001, dentro del ruido). Por log-loss
+la "mejor" sería 00:00, pero por 0,0004; no es evidencia. Se elige **17:30** por fidelidad de la feature (menor MAE, sesgo ≈ 0, mayor
+coincidencia), que es la causa real del problema y no depende de ruido de la muestra. La importancia práctica es sobre todo evitar
+valores 0–1 que el modelo no vio (mínimo en entrenamiento: 2).
