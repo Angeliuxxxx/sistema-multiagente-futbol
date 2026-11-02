@@ -5,6 +5,22 @@
 `ppda`, `xpts`, además de `xg`, tiros y tiros a puerta) coincide con las métricas que publica ese sitio. **No está
 confirmado** (el archivo no trae metadatos de origen); la procedencia exacta debe verificarse antes de citarla en la tesis.
 
+## PDF del corpus RAG (no versionados)
+Los PDF de `data/` son documentos de terceros y el repositorio es público, así que **no se versionan** (`data/*.pdf` en
+`.gitignore`). Cada persona los descarga de su fuente y los coloca en `data/` con **estos nombres exactos** (los notebooks
+03 y 05 los leen por ruta):
+
+| Archivo | Lo usa | Fuente |
+|---|---|---|
+| `Primera_y_Segunda_Division.pdf` (Normas de Competición Primera/Segunda 2026/27) | 05 | Fuente oficial de la competición; enlace por confirmar |
+| `reglamento laliga 2025-2026.pdf` | 03 | Fuente oficial de la competición; enlace por confirmar |
+| `Reglas de Juego 2026_27_paginas individuales.pdf` (IFAB) | 03, 05 | IFAB (theifab.org), edición 2026/27; enlace por confirmar |
+| `Primera División de España - Wikipedia, la enciclopedia libre.pdf` | 03 | Artículo «Primera División de España» de es.wikipedia.org, impreso a PDF |
+| `El Clásico - Wikipedia, la enciclopedia libre.pdf` | 03 | Artículo «El Clásico» de es.wikipedia.org, impreso a PDF |
+
+Los PDF de Wikipedia son una captura del artículo en una fecha concreta; si cambia el artículo, el índice regenerado
+puede diferir del versionado en los resultados.
+
 ## Contenido (medido sobre el archivo)
 - Rango: 2014-08-23 a 2025-05-25.
 - 4.180 partidos y 31 equipos (`team_matches.csv`, derivado, tiene 8.360 filas: una por equipo y partido).

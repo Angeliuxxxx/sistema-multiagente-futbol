@@ -48,13 +48,12 @@ Un `git clone` **no basta para arrancar**: faltan los datos derivados. Esto es l
 | Archivo en `data/` | ¿En Git? | Cómo se obtiene |
 |---|---|---|
 | `modelo_predictivo_laliga.pkl` | Sí | Ya viene. Se puede regenerar con el notebook 02 |
-| PDF de Reglas de Juego IFAB 2026/27, PDF `reglamento laliga 2025-2026` y los 2 PDF de Wikipedia | Sí | Ya vienen |
 | `la_liga_2014_2025_all_matches_final.csv` (datos crudos) | **No** (`data/*.csv` está ignorado) | **Hay que aportarlo.** Ver «Créditos» sobre su procedencia |
-| `Primera_y_Segunda_Division.pdf` (Normas de Competición 2026/27) | **No** (`data/*.pdf` está ignorado para archivos nuevos) | **Hay que aportarlo** |
+| Los 5 PDF del corpus: `Primera_y_Segunda_Division.pdf` (Normas de Competición 2026/27), `reglamento laliga 2025-2026.pdf`, `Reglas de Juego 2026_27_paginas individuales.pdf` y los 2 de Wikipedia (`Primera División de España…`, `El Clásico…`) | **No** (`data/*.pdf` está ignorado: son de terceros y el repo es público) | **Hay que aportarlos**, cada uno desde su fuente. Ver `docs/datos.md` |
 | `df_final_features.csv` y `team_matches.csv` | **No** | Los genera el notebook 01 |
 | `chroma_index/` (índice v1) y `chroma_index_v2/` | **No** (`data/chroma_index*/`) | Los generan los notebooks 03 y 05 |
 
-El CSV crudo **no se sube al repositorio**: su licencia es incierta (ver «Créditos»). Cada persona debe aportar su copia.
+El CSV crudo y los PDF **no se suben al repositorio**: el CSV tiene licencia incierta (ver «Créditos») y los PDF son documentos de terceros. Cada persona debe aportar su copia.
 
 ### Cómo regenerarlo, paso a paso
 
@@ -65,15 +64,15 @@ El CSV crudo **no se sube al repositorio**: su licencia es incierta (ver «Créd
    pip install -r backend/requirements.txt
    pip install jupyter matplotlib shap pdfplumber pymupdf langchain-text-splitters
    ```
-2. Coloca en `data/` los dos archivos que debes aportar: `la_liga_2014_2025_all_matches_final.csv` y `Primera_y_Segunda_Division.pdf`.
+2. Coloca en `data/` los 6 archivos que debes aportar: `la_liga_2014_2025_all_matches_final.csv` y los 5 PDF del corpus (fuentes en `docs/datos.md`).
 3. Ejecuta los notebooks **en este orden**, cada uno con *Restart & Run All*, desde la carpeta `notebooks/` (usan rutas `../data/`):
 
    | Orden | Notebook | Lee | Escribe |
    |---|---|---|---|
    | 1 | `01_eda_partidos` | CSV crudo | `df_final_features.csv`, `team_matches.csv` |
    | 2 | `02_modelo_baseline` | `df_final_features.csv` | `modelo_predictivo_laliga.pkl` (sobrescribe el versionado) |
-   | 3 | `03_rag_corpus` | los 4 PDF versionados | `chroma_index/` |
-   | 4 | `05_corpus_v2` | `Primera_y_Segunda_Division.pdf`, Reglas de Juego y `chroma_index/` | `chroma_index_v2/` |
+   | 3 | `03_rag_corpus` | 4 PDF que debes aportar (`reglamento laliga 2025-2026`, Reglas de Juego, los 2 de Wikipedia) | `chroma_index/` |
+   | 4 | `05_corpus_v2` | `Primera_y_Segunda_Division.pdf` y Reglas de Juego (PDF que debes aportar) y `chroma_index/` | `chroma_index_v2/` |
 
    El 03 va antes del 05 porque el 05 rescata de `chroma_index/` los fragmentos ya limpios de Wikipedia. El `04_agente_conocimiento` es exploratorio y no hace falta.
 4. Si Chroma da errores de base de datos, usa una carpeta nueva y no reutilices una corrupta.
@@ -175,7 +174,7 @@ es de unos 60 a 98 %. Un 100 % del orquestador no garantiza que generalice.
 - **Alcance de la liga y del corpus.** Solo Primera División; los artículos de Segunda se excluyen salvo que la pregunta diga «segunda». El corpus es de la
   temporada 2026/27, y no contiene datos como quién ganó un clásico concreto.
 - **Despliegue.** Solo probado con Docker Desktop sobre WSL2 y amd64. La interfaz se probó contra el backend real pero no en un navegador real. El LLM de despliegue final sigue pendiente.
-- **Dependencia de los PDF.** Reproducir el índice exige aportar dos archivos que no están en Git.
+- **Dependencia de los PDF.** Reproducir el índice exige aportar el CSV y los 5 PDF del corpus, que no están en Git.
 
 ## Estructura del repositorio
 
