@@ -1,0 +1,47 @@
+/*
+ * Tokens de diseño «Estadio nocturno». Es el ÚNICO sitio con valores de color/tipografía/tamaño:
+ * el resto de CSS solo usa var(--…), así que cambiar el tema es tocar este archivo.
+ * Los pares texto/fondo usados están medidos y superan 4,5:1 (ver docs/frontend.md).
+ */
+:root {
+  color-scheme: dark; /* controles nativos (select, date, scrollbars) en oscuro sin hackearlos uno a uno */
+
+  /* Superficies */
+  --fondo: #0a1512;
+  --superficie: #101f1a;
+  --superficie-2: #16291f;
+  --linea: #23382e;
+
+  /* Texto */
+  --texto: #eaf2ec;
+  --texto-suave: #9db3a6;
+
+  /* Resultado: cada color va SIEMPRE acompañado de una etiqueta de texto (nunca solo color) */
+  --local: #3ddc84;      /* verde césped, también es el acento de la marca */
+  --empate: #c9d6ce;
+  --visitante: #5ba8ff;
+  --aviso: #f5b83d;
+
+  /* Insignias de ruta (texto sobre fondo) */
+  --ins-pred-texto: #3ddc84;  --ins-pred-fondo: #123524;
+  --ins-conoc-texto: #8cc4ff; --ins-conoc-fondo: #12283d;
+  --ins-aviso-texto: #f5b83d; --ins-aviso-fondo: #3a2c0b;
+
+  /* Error: rojo apagado propio, el diseño no define uno y el ámbar ya significa «aviso» */
+  --error-texto: #ffb4ab;
+  --error-fondo: #3a1613;
+
+  /* Texto sobre el acento verde (botón principal): oscuro, el blanco no llegaría a 4,5:1 */
+  --acento: var(--local);
+  --acento-texto: #06210f;
+
+  /* Tipografía: fuentes locales vía @fontsource (sin CDN, la demo funciona sin Wi-Fi) */
+  --fuente-titulo: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --fuente-texto: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Medidas */
+  --tactil: 44px;        /* objetivo táctil mínimo */
+  --radio: 14px;
+  --radio-chico: 10px;
+  --ancho-max: 1200px;
+}
