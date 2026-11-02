@@ -163,3 +163,36 @@ modelo entrenado sin la temporada de calibración** (como el sustituto): reentre
 evaluar en prueba; el modelo final se reentrenaría con todo y reutilizaría el calibrador (con la salvedad de que cambian algo
 las probabilidades). Eso toca el `.pkl`, así que queda para decisión del autor. Limitaciones: una sola partición cronológica,
 380 partidos de calibración, y el sustituto no es exactamente el modelo desplegado.
+
+## Sin RAG vs. con RAG (02/11/2026)
+
+Script: `backend/scripts/evaluar_sin_rag.py`. Mismas 11 preguntas de desarrollo (`evaluar_frases`), mismo LLM (qwen2.5:7b, temperature 0,
+num_ctx 2048, ya calentado) y mismo criterio de acierto que `evaluar_respuestas` (hecho clave en el texto). «Sin RAG» = pregunta directa
+al modelo con un prompt neutro («Eres un asistente experto en fútbol. Responde en español, de forma clara y breve»), sin fragmentos.
+Los ms de «con RAG» son búsqueda + LLM por `/chat`.
+
+| Pregunta | Sin RAG | ms | Con RAG | ms |
+|---|---|---|---|---|
+| ¿Cuántos suplentes se pueden usar en un partido? | ✘ | 2.825 | ✘ | 4.046 |
+| ¿Cuántas sustituciones puede hacer cada equipo? | ✔ | 3.722 | ✔ | 4.144 |
+| ¿Cómo funciona la sustitución por conmoción cerebral? | ✘ | 3.803 | ✔ | 6.881 |
+| ¿Cuántos equipos descienden de Primera División? | ✘ | 1.690 | ✘ | 2.110 |
+| ¿Cuántos puntos se dan por una victoria? | ✔ | 1.412 | ✔ | 2.376 |
+| ¿Cuántos equipos participan en Primera División? | ✔ | 1.236 | ✔ | 2.403 |
+| ¿Cómo se desempata si dos equipos terminan con los mismos puntos? | ✘ | 3.090 | ✔ | 6.006 |
+| ¿Cuántas amonestaciones llevan a una suspensión? | ✘ | 2.788 | ✔ | 4.063 |
+| ¿Cuántos futbolistas extranjeros no comunitarios puede inscribir un club? | ✘ | 3.444 | ✔ | 3.478 |
+| ¿Cuándo abre el periodo de inscripción de licencias de invierno? | ✘ | 3.636 | ✔ | 3.322 |
+| ¿En qué horarios se juegan los partidos del sábado? | ✔ | 4.600 | ✔ | 3.375 |
+| **Total** | **4/11** | 2.931 medio | **9/11** | 3.836 medio |
+
+Lectura:
+- RAG sube de 4/11 a 9/11 (+5) a un coste de ~0,9 s de media. Los aciertos sin RAG son preguntas de cultura general
+  (3 puntos, 20 equipos) o coincidencias; las que dependen del reglamento 2026/27 (amonestaciones: dijo 3, real 5; extranjeros:
+  dijo 4, real 3; licencias: dijo «octubre», real 2 de enero de 2027) las falla con seguridad y sin avisar de que no sabe.
+- Los aciertos sin RAG son generosos: «sustituciones» acierta por el «5» genérico de la Champions, y «sábado» por «a partir de las
+  12:00», aunque el modelo inventa «hasta las 22:00» (el reglamento dice 21:01). El hecho clave es una cifra corta; no mide si el
+  resto de la respuesta es correcta, ni la cita, que solo existe con RAG.
+- Con RAG hay dos fallos (suplentes, descienden); los dos ya estaban documentados arriba. Sin RAG, «descienden» responde «2 equipos»
+  (incorrecto: son 3) y lo afirma con seguridad; con RAG responde «No encontré esa información». Es preferible, aunque cuente igual como fallo.
+- Muestra pequeña (11), una sola corrida con temperature 0.
