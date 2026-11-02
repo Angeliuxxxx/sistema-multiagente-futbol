@@ -196,3 +196,27 @@ Lectura:
 - Con RAG hay dos fallos (suplentes, descienden); los dos ya estaban documentados arriba. Sin RAG, «descienden» responde «2 equipos»
   (incorrecto: son 3) y lo afirma con seguridad; con RAG responde «No encontré esa información». Es preferible, aunque cuente igual como fallo.
 - Muestra pequeña (11), una sola corrida con temperature 0.
+
+## Arreglo del fallo «descienden» (02/11/2026)
+
+**Causa** (medida): el fragmento del Art. 8 con «posiciones 18ª, 19ª y 20ª» dice «descenderán»/«descenso» (raíces `descend`/`descens`); la
+pregunta dice «descienden» (`desciend`, verbo irregular e→ie que Snowball no une). BM25 no daba puntos por ese término (el
+fragmento quedaba 9.º en BM25 por palabras genéricas) y en embeddings quedaba 16.º; RRF lo dejaba fuera del cupo de 3.
+
+Opciones medidas solo con las preguntas de desarrollo (`evaluar_frases` 11 + 2 de alcance, `evaluar_recuperacion`, `evaluar_respuestas` con 7B, in-process, 1 corrida):
+| Variante | frases | recuperación | respuestas | Notas |
+|---|---|---|---|---|
+| Base | 10/11 | 17/17 | 9/11 | |
+| A. Léxico de dominio (`descend`/`desciend`/`descens`→`descens`, ídem *ascen*) | 10/11 | 17/17 | 9/11 | BM25: puesto 9→1, pero RRF lo deja 4.º (cupo 3) |
+| S. Quitar de BM25 `equip`, `primer`, `division` | 10/11 | **16/17** | 9/11 | no arregla y rompe una de recuperación |
+| **A+S (elegida)** | **11/11** (alcance 2/2) | **17/17** | **10/11** | sin tocar fusión, cupo ni latencia (~4,2 s medio) |
+| Referencia: A + peso ×3 del léxico en RRF | 11/11 | 17/17 | 9/11 | rompe «sustituciones»; cambia la fusión de todas las consultas |
+| Referencia: cupo de Normas 3→4 | 10/11 | 17/17 | 9/11 | no arregla; +2 s por contexto más largo |
+
+**Elección: A+S.** Ninguna sola funciona; juntas son dos cambios pequeños y locales al tokenizador (`app/retrieval.py`), simétricos
+en índice y consulta, sin reindexar. Pesar el léxico ×3 cambia el comportamiento de todas las búsquedas y regresó una pregunta.
+Respuestas 10/11: queda solo «suplentes» (fallo de generación por ambigüedad, ya documentado).
+
+Salvedades: (1) las palabras S y el léxico se eligieron mirando el fallo de desarrollo; la validez fuera de muestra la dirá el
+held-out. (2) S es específica de este corpus (solo Primera División); en otro dominio no valdría. (3) El léxico cubre solo
+descender/ascender; otros verbos irregulares siguen sin unirse. (4) Respuestas: una corrida, n=11; 9→10 no es una diferencia estadística.

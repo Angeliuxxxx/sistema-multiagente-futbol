@@ -41,6 +41,15 @@ _stemmer = snowballstemmer.stemmer("spanish")
 _STOP = set("de la el en y a los las del un una por con para que se es al lo como su cual cuales cuantos cuantas "
             "cuanto cuando donde qui quien".split())
 
+# Léxico del dominio: raíces que el stemmer Snowball NO une aunque sean la misma familia. "descienden" (verbo irregular,
+# e->ie) da "desciend", pero el Art. 8 dice "descenderán"/"descenso" ("descend"/"descens"); sin esto BM25 no daba ni un punto
+# a ese término y el fragmento de "posiciones 18ª, 19ª y 20ª" no llegaba al LLM. Se aplica a la raíz ya extraída (coincidencia
+# exacta), así "ascensor" o "condescendiente" no se mezclan. Se aplica igual al índice y a la consulta.
+_LEXICO = {"desciend": "descens", "descend": "descens", "asciend": "ascens", "ascend": "ascens"}
+# Raíces que no discriminan en ESTE corpus: la app trata solo de Primera División y casi todo artículo habla de "equipos" y
+# de "Primera División", así que puntúan en cualquier chunk y empujan al fondo el término que sí distingue (descens).
+_STOP_DOMINIO = {"equip", "primer", "division"}
+
 
 @dataclass(frozen=True)
 class Fragmento:
@@ -64,7 +73,8 @@ def tokenizar(t: str) -> list[str]:
     # Sin acentos y en minúsculas, para que "sustitución" y "sustituciones" compartan raíz tras el stemmer.
     t = unicodedata.normalize("NFD", t.lower())
     t = "".join(c for c in t if unicodedata.category(c) != "Mn")
-    return [_stemmer.stemWord(w) for w in re.findall(r"[a-z0-9]+", t) if w not in _STOP]
+    raices = (_stemmer.stemWord(w) for w in re.findall(r"[a-z0-9]+", t) if w not in _STOP)
+    return [_LEXICO.get(r, r) for r in raices if r not in _STOP_DOMINIO]
 
 
 @lru_cache(maxsize=1)
