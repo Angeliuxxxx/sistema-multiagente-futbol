@@ -35,15 +35,16 @@ function mensajeDeError(e) {
   return `Algo salió mal: ${e.message}`
 }
 
-function Burbuja({ m, onMostrarPanel }) {
-  if (m.rol === 'usuario') return <li className="burbuja usuario">{m.texto}</li>
-  return (
-    <li className={`burbuja sistema${m.error ? ' error' : ''}`}>
-      {m.fuente && <span className={`etiqueta etiqueta-${m.fuente}`}>{ETIQUETA[m.fuente]}</span>}
-      <p>{m.texto}</p>
+// Insignia de ruta: la clase pone el color, pero el TEXTO es lo que identifica la ruta (nunca solo color).
+const CLASE_RUTA = { prediccion: 'pred', conocimiento: 'conoc', aclarar: 'aviso', fuera_de_alcance: 'aviso' }
 
-      {m.fuentes?.length > 0 && (
-        <ul className="fuentes" aria-label="Fuentes citadas">
+// «Ficha de fuente»: de dónde sale la respuesta (CLAUDE.md: toda respuesta indica su fuente). Todo viene de la API.
+function FichaFuente({ m }) {
+  if (m.fuentes?.length > 0) {
+    return (
+      <div className="ficha-fuente">
+        <span className="ficha-titulo">Fuente</span>
+        <ul aria-label="Fuentes citadas">
           {m.fuentes.map((f, i) => (
             <li key={i}>
               {f.documento}
@@ -52,13 +53,42 @@ function Burbuja({ m, onMostrarPanel }) {
             </li>
           ))}
         </ul>
-      )}
+      </div>
+    )
+  }
+  if (m.prediccion) {
+    return (
+      <div className="ficha-fuente">
+        <span className="ficha-titulo">Fuente</span>
+        <p>Modelo XGBoost · datos hasta {m.prediccion.datos_hasta}</p>
+      </div>
+    )
+  }
+  if (m.fuente) {
+    return (
+      <div className="ficha-fuente">
+        <span className="ficha-titulo">Fuente</span>
+        <p>{ETIQUETA[m.fuente] ?? m.fuente}</p>
+      </div>
+    )
+  }
+  return null
+}
+
+function Burbuja({ m, onMostrarPanel }) {
+  if (m.rol === 'usuario') return <li className="burbuja usuario">{m.texto}</li>
+  return (
+    <li className={`respuesta${m.error ? ' error' : ''}`}>
+      {m.ruta && <span className={`insignia insignia-${CLASE_RUTA[m.ruta] ?? 'aviso'}`}>{NOMBRE_RUTA[m.ruta] ?? m.ruta}</span>}
+      <p className="respuesta-texto">{m.texto}</p>
 
       {m.prediccion && (
         <button type="button" className="enlace" onClick={() => onMostrarPanel(m.prediccion)}>
           Ver detalle en el panel
         </button>
       )}
+
+      <FichaFuente m={m} />
 
       {m.ruta && (
         <details>
@@ -115,7 +145,7 @@ export default function Chat({ onPrediccion, onMostrarPanel }) {
           <li className="vacio">Escribe una pregunta de reglamento o de pronóstico, o prueba un ejemplo.</li>
         )}
         {mensajes.map((m) => <Burbuja key={m.id} m={m} onMostrarPanel={onMostrarPanel} />)}
-        {pensando && <li className="burbuja sistema pensando" role="status">Pensando<span aria-hidden="true">…</span></li>}
+        {pensando && <li className="respuesta pensando" role="status">Pensando<span aria-hidden="true">…</span></li>}
         <li ref={final} aria-hidden="true" />
       </ol>
 
