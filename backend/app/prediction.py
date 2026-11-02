@@ -14,6 +14,15 @@ import pandas as pd
 DATA_DIR = Path(os.getenv("DATA_DIR", Path(__file__).resolve().parents[2] / "data"))
 VENTANA = 5  # mismos 5 partidos que usamos con rolling(5) al entrenar
 
+# Hora que se asume cuando la fecha llega SIN hora (p. ej. "2025-06-01" desde la API).
+# Por qué: training-serving skew. Al entrenar, dias_desde_ultimo_partido restaba horas de inicio reales; en inferencia la
+# fecha llegaba a las 00:00 y la feature salía 1 día menos en ~57 % de los casos (valores 0-1 que el modelo nunca vio;
+# el mínimo en entrenamiento es 2). Evidencia (backend/scripts/auditar_dias_descanso.py, docs/mediciones.md): la hora
+# mediana de los 4.180 partidos es 17:30 y es la que mejor reproduce la feature de entrenamiento (MAE 0,28 días,
+# 71,8 % de coincidencia exacta, sesgo -0,07) frente a 00:00 (MAE 0,57, 43,3 %). La moda (20:00) es peor (62,2 %).
+HORA_POR_DEFECTO = pd.Timedelta(hours=17, minutes=30)
+DIAS_FECHA_POR_DEFECTO = 7  # sin fecha: último dato + 7 días (una jornada típica), ver fecha_por_defecto()
+
 # Mismo mapeo que `target_map` del notebook 02: el modelo devuelve probabilidades en este orden.
 ETIQUETAS = {0: "victoria_visitante", 1: "empate", 2: "victoria_local"}
 
@@ -32,6 +41,32 @@ def cargar_team_matches() -> pd.DataFrame:
 
 def equipos() -> list[str]:
     return sorted(cargar_team_matches()["team"].unique())
+
+
+def fecha_por_defecto(tm: pd.DataFrame | None = None) -> pd.Timestamp:
+    """Fecha a predecir cuando el usuario no da ninguna: último dato + 7 días, a la hora típica.
+
+    Con el día siguiente salían 0 o 1 días de descanso (el último partido es del 24-25 de mayo), valores fuera de lo
+    que el modelo vio al entrenar (mínimo 2). A 7 días el descanso queda en el rango normal de una jornada.
+    """
+    tm = cargar_team_matches() if tm is None else tm
+    return tm["date"].max().normalize() + pd.Timedelta(days=DIAS_FECHA_POR_DEFECTO) + HORA_POR_DEFECTO
+
+
+def con_hora(fecha: pd.Timestamp, equipos_: tuple[str, ...], tm: pd.DataFrame) -> pd.Timestamp:
+    """Completa la hora de una fecha que llega a las 00:00 para igualar lo que vio el modelo al entrenar.
+
+    - Si algún equipo jugó realmente ese día, se usa la hora real de ese partido (así reproducimos exacto la feature
+      del entrenamiento, p. ej. al volver a predecir un partido ya jugado).
+    - Si no, HORA_POR_DEFECTO. Una fecha que ya trae hora se respeta tal cual.
+    """
+    if fecha != fecha.normalize():
+        return fecha
+    for equipo in equipos_:
+        del_dia = tm[(tm["team"] == equipo) & (tm["date"].dt.normalize() == fecha)]
+        if not del_dia.empty:
+            return del_dia["date"].iloc[0]
+    return fecha + HORA_POR_DEFECTO
 
 
 def ultima_forma(equipo: str, fecha: pd.Timestamp, team_matches: pd.DataFrame) -> dict | None:
@@ -56,9 +91,7 @@ def predecir_partido(local: str, visitante: str, fecha: pd.Timestamp | None = No
     if local == visitante:
         raise ValueError("El equipo local y el visitante deben ser distintos.")
     tm, modelo = cargar_team_matches(), cargar_modelo()
-    # Sin fecha: el día SIGUIENTE al último dato, no hoy. Con hoy, dias_desde_ultimo_partido valdría ~500 (los datos
-    # terminan en 2025-05-25), un valor que el modelo nunca vio al entrenar. Es el mismo criterio que usa /preguntar.
-    fecha = fecha if fecha is not None else tm["date"].max().normalize() + pd.Timedelta(days=1)
+    fecha = con_hora(fecha, (local, visitante), tm) if fecha is not None else fecha_por_defecto(tm)
 
     forma = {}
     for rol, equipo in (("home", local), ("away", visitante)):

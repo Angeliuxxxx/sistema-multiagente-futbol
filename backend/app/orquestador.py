@@ -9,7 +9,7 @@ import re
 import time
 import unicodedata
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date
 from typing import Literal
 
 import pandas as pd
@@ -199,10 +199,9 @@ class PreguntarResponse(BaseModel):
 
 
 def _responder_prediccion(local: str, visitante: str, fecha: date | None) -> tuple[str, PrediccionDetalle]:
-    # Los datos terminan en `datos_hasta`. Si el usuario no da fecha se predice el día SIGUIENTE al último dato:
-    # con la fecha de hoy el modelo vería ~500 días sin jugar (dias_desde_ultimo_partido), algo fuera de lo que aprendió.
-    ultimo = prediction.cargar_team_matches()["date"].max().normalize()
-    f = pd.Timestamp(fecha) if fecha else ultimo + timedelta(days=1)
+    # Los datos terminan en `datos_hasta`. Sin fecha del usuario, prediction usa el último dato + 7 días (no hoy: con hoy
+    # el modelo vería ~500 días sin jugar; ni el día siguiente: daba 0-1 días de descanso, fuera de lo que aprendió).
+    f = pd.Timestamp(fecha) if fecha else None
     r = prediction.predecir_partido(local, visitante, f)
     p = r["probabilidades"]
     pct = lambda k: f"{p[k] * 100:.1f} %"   # noqa: E731
