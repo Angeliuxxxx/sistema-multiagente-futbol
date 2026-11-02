@@ -13,13 +13,15 @@ Los PDF de `data/` son documentos de terceros y el repositorio es público, así
 | Archivo | Lo usa | Fuente |
 |---|---|---|
 | `Primera_y_Segunda_Division.pdf` | 05 | «Normas Reguladoras y Bases de Competición de los Campeonatos Nacionales de Liga de Primera y Segunda División, temporada 2026-2027». Lo publica la **RFEF** (LaLiga organiza en coordinación con ella): <https://rfef.es/sites/default/files/2026-06/1._CNL_Primera_y_Segunda_Division.pdf> (en la RFEF se llama `1._CNL_Primera_y_Segunda_Division.pdf`; hay que renombrarlo) |
-| `reglamento laliga 2025-2026.pdf` | 03 | Fuente oficial de la competición; enlace por confirmar |
+| `reglamento laliga 2025-2026.pdf` | 03 (y el exploratorio 04) | Primera página: «REGLAMENTO · TEMPORADA 2025/26», 41 páginas, PDF creado el 2025-09-19. **El archivo no indica quién lo emite** (el título de los metadatos es una plantilla sin rellenar), así que su origen oficial está por confirmar |
 | `Reglas de Juego 2026_27_paginas individuales.pdf` | 03, 05 | Reglas de Juego IFAB 2026/27 en español: <https://theifab.com/documents>. Hay variantes «páginas dobles» e «individuales» con numeración distinta; el corpus usa **«páginas individuales»** y las citas de página del sistema dependen de ella |
-| `Primera División de España - Wikipedia, la enciclopedia libre.pdf` | 03 | Artículo «Primera División de España» de es.wikipedia.org, impreso a PDF |
-| `El Clásico - Wikipedia, la enciclopedia libre.pdf` | 03 | Artículo «El Clásico» de es.wikipedia.org, impreso a PDF |
+| `Primera División de España - Wikipedia, la enciclopedia libre.pdf` | 03 | Artículo «Primera División de España» de es.wikipedia.org, exportado a PDF el 2026-08-10 (revisión `oldid=174757811`): <https://es.wikipedia.org/wiki/Primera_División_de_España> |
+| `El Clásico - Wikipedia, la enciclopedia libre.pdf` | 03 | Artículo «El Clásico», exportado a PDF el 2026-08-10 (revisión `oldid=174777709`): <https://es.wikipedia.org/wiki/El_Clásico> |
 
-Los PDF de Wikipedia son una captura del artículo en una fecha concreta; si cambia el artículo, el índice regenerado
-puede diferir del versionado en los resultados.
+Los PDF de Wikipedia son una captura de esa revisión; si cambia el artículo, el índice regenerado puede diferir del versionado. El texto de Wikipedia está bajo
+CC BY-SA; los PDF no traen el pie de licencia, así que la versión exacta no consta en el archivo (Wikimedia usa hoy la 4.0).
+
+`data/reglamento.pdf` (205 páginas, Reglamento General de la LNFP ratificado por el CSD, julio de 2024) **no lo usa ningún notebook ni el backend**: es un resto sin uso, ignorado por Git.
 
 ## Contenido (medido sobre el archivo)
 - Rango: 2014-08-23 a 2025-05-25.

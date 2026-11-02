@@ -211,7 +211,9 @@ es de unos 60 a 98 %. Un 100 % del orquestador no garantiza que generalice.
 - **Normas de Competición Primera y Segunda División 2026/27.** «Normas Reguladoras y Bases de Competición de los Campeonatos Nacionales de Liga de Primera y Segunda División,
   temporada 2026-2027», publicadas por la RFEF (LaLiga organiza la competición en coordinación con ella): <https://rfef.es/sites/default/files/2026-06/1._CNL_Primera_y_Segunda_Division.pdf>.
   Se guarda como `data/Primera_y_Segunda_Division.pdf`. Los derechos pertenecen a sus titulares.
-- **Wikipedia** («Primera División de España» y «El Clásico»). Texto bajo licencia [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.es), con atribución a sus autores.
+- **Reglamento 2025/26** (`reglamento laliga 2025-2026.pdf`, 41 páginas, portada «REGLAMENTO · TEMPORADA 2025/26»). El archivo no indica quién lo emite; su origen está por confirmar. Los derechos pertenecen a sus titulares.
+- **Wikipedia** («Primera División de España» y «El Clásico»), exportados a PDF el 10/08/2026 (revisiones 174757811 y 174777709 de es.wikipedia.org). Texto bajo licencia
+  [CC BY-SA](https://creativecommons.org/licenses/by-sa/4.0/deed.es), con atribución a sus autores; los PDF no traen el pie de licencia, así que la versión no consta en el archivo (Wikimedia usa hoy la 4.0).
 - **Modelo de embeddings:** `paraphrase-multilingual-MiniLM-L12-v2` (sentence-transformers). **LLM:** `qwen2.5` servido localmente por Ollama.
 
 Este proyecto es académico. No tiene afiliación con LaLiga, el IFAB ni Understat.
