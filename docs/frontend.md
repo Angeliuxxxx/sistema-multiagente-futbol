@@ -3,7 +3,7 @@
 ## Contrato con el backend (campos reales)
 - `GET /teams` → `string[]` (31 nombres sin tildes, p. ej. `"Atletico Madrid"`).
 - `POST /predict` ← `{local, visitante, fecha|null}` → `{fuente, local, visitante, fecha, probabilidades{victoria_visitante, empate, victoria_local}, resultado_probable, forma_local{6 métricas}, forma_visitante, datos_hasta}`.
-  Sin `fecha` usa el día siguiente al último dato (antes usaba «hoy», lo que daba ~500 días de descanso, fuera de lo que el modelo vio).
+  Sin `fecha` usa el último dato + 7 días a las 17:30 (antes «hoy», con ~500 días de descanso, y luego «el día siguiente», con 0-1 días: ambos fuera de lo que el modelo vio; ver `docs/datos.md`, «Desfase entrenamiento-inferencia»).
 - `POST /preguntar` ← `{pregunta, fecha|null}` → `{respuesta, ruta, motivo, fuente, equipos, fuentes[{documento, seccion, pagina, texto}], probabilidades, datos_hasta, prediccion|null, ms_total}`.
   `prediccion` (nuevo) = `{local, visitante, probabilidades{local, empate, visitante}, fecha_forma, datos_hasta, forma_local, forma_visitante}`.
 

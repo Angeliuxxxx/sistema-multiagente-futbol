@@ -31,8 +31,9 @@ largo gana («Atlético de Madrid» no cuenta como Real Madrid).
 
 ## Decisiones de la predicción
 - Campos reales de `PredictRequest`: `local: str`, `visitante: str`, `fecha: date | None` (por defecto, hoy).
-- Los datos terminan el 2025-05-25. Sin fecha del usuario se usa el **día siguiente al último dato**, no hoy: con la fecha
-  de hoy `dias_desde_ultimo_partido` valdría ~500, un valor que el modelo nunca vio al entrenar. La respuesta lo dice.
+- Los datos terminan el 2025-05-25. Sin fecha del usuario se usa **último dato + 7 días a las 17:30** (2025-06-01 17:30), no hoy
+  (daba ~500 días de descanso) ni el día siguiente (daba 0-1 días): el modelo nunca vio descansos menores de 2 días. La respuesta
+  lo dice. Si el usuario da una fecha sin hora se asume 17:30 (o la hora real si ese día hubo partido); ver `docs/datos.md`.
 - La respuesta de predicción es una plantilla (no pasa por LLM) y siempre aclara quién es local.
 
 ## Límites conocidos
