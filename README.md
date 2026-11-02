@@ -77,10 +77,8 @@ El CSV crudo y los PDF **no se suben al repositorio**: el CSV tiene licencia inc
    El 03 va antes del 05 porque el 05 rescata de `chroma_index/` los fragmentos ya limpios de Wikipedia. El `04_agente_conocimiento` es exploratorio y no hace falta.
 4. Si Chroma da errores de base de datos, usa una carpeta nueva y no reutilices una corrupta.
 
-**Verificado el 01/11/2026** en una copia aparte (sin tocar tu `data/`), ejecutando las celdas de código de los cuatro notebooks en orden: `team_matches.csv` y
-`df_final_features.csv` salen idénticos byte a byte a los originales, `chroma_index_v2` sale con la misma colección (`corpus_laliga_v2`, 1.673 fragmentos) y el `.pkl`
-regenerado da la misma log-loss en prueba que el versionado. Tiempos: 01 ≈ 1 s, 02 ≈ 14 min (búsqueda de hiperparámetros), 03 ≈ 70 s, 05 ≈ 96 s.
-**No probado:** un entorno virtual limpio (la prueba usó el venv ya existente, así que la lista de `pip install` de arriba no se ha comprobado desde cero), *Restart & Run All* dentro de Jupyter (se ejecutaron las celdas como script) ni que alguien más aporte sus propios archivos de origen.
+**No verificado:** la regeneración completa (notebooks 01 → 02 → 03 → 05) no se ha comprobado de extremo a extremo. Tampoco se ha probado desde un entorno virtual
+limpio (la lista de `pip install` de arriba es la esperada, no una comprobada), ni *Restart & Run All* dentro de Jupyter, ni con PDF y CSV aportados por otra persona.
 
 ## Inicio rápido
 
