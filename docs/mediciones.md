@@ -220,3 +220,21 @@ Respuestas 10/11: queda solo «suplentes» (fallo de generación por ambigüedad
 Salvedades: (1) las palabras S y el léxico se eligieron mirando el fallo de desarrollo; la validez fuera de muestra la dirá el
 held-out. (2) S es específica de este corpus (solo Primera División); en otro dominio no valdría. (3) El léxico cubre solo
 descender/ascender; otros verbos irregulares siguen sin unirse. (4) Respuestas: una corrida, n=11; 9→10 no es una diferencia estadística.
+
+## Held-out de RAG (02/11/2026, ejecutado UNA vez, tras el arreglo A+S)
+
+Script `backend/scripts/evaluar_heldout_rag.py`; preguntas en `backend/scripts/datos_evaluacion/heldout_rag.json` (commiteadas antes de tocar el
+recuperador). Cubren artículos NO usados para afinar (lista de usados en el JSON): Normas Art. 9, 11, 12, 28; Reglas 2, 3, 10, 13, 15, 16.
+
+| | Desarrollo (11) | Held-out (10) |
+|---|---|---|
+| Frase clave en los 8 fragmentos | 11/11 | **9/10** |
+| Hecho clave en la respuesta | 10/11 | **9/10** |
+
+Fallo: «¿Cuánto puede durar como máximo cada periodo de tiempo suplementario?» (Regla 10): el fragmento no llegó a los 8 y el modelo
+respondió «No encontré esa información» (fallo de recuperación; abstención correcta, no alucinación). Los demás llegaron en las posiciones 1–5
+(varios en la 4–5: margen estrecho dentro de 8). Latencia media de este lote ≈ 4,1 s.
+
+Lectura prudente: n=10, intervalo muy ancho (9/10 → IC95 de Wilson ≈ 60–98 %); el held-out lo redactó la misma persona que el desarrollo, y
+la métrica de «hecho clave» es generosa (la respuesta a «mínimo de jugadores» es confusa aunque contiene «siete»). La caída respecto al
+desarrollo (11/11) es lo esperable al pasar a datos no vistos. No se retocó nada tras ver estas cifras.
