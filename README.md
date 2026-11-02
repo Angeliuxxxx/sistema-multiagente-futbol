@@ -49,7 +49,7 @@ Un `git clone` **no basta para arrancar**: faltan los datos derivados. Esto es l
 |---|---|---|
 | `modelo_predictivo_laliga.pkl` | Sí | Ya viene. Se puede regenerar con el notebook 02 |
 | `la_liga_2014_2025_all_matches_final.csv` (datos crudos) | **No** (`data/*.csv` está ignorado) | **Hay que aportarlo.** Ver «Créditos» sobre su procedencia |
-| Los 5 PDF del corpus: `Primera_y_Segunda_Division.pdf` (Normas de Competición 2026/27), `reglamento laliga 2025-2026.pdf`, `Reglas de Juego 2026_27_paginas individuales.pdf` y los 2 de Wikipedia (`Primera División de España…`, `El Clásico…`) | **No** (`data/*.pdf` está ignorado: son de terceros y el repo es público) | **Hay que aportarlos**, cada uno desde su fuente. Ver `docs/datos.md` |
+| Los 5 PDF del corpus: `Primera_y_Segunda_Division.pdf` (Normas de Competición 2026/27, publicadas por la RFEF), `reglamento laliga 2025-2026.pdf`, `Reglas de Juego 2026_27_paginas individuales.pdf` y los 2 de Wikipedia (`Primera División de España…`, `El Clásico…`) | **No** (`data/*.pdf` está ignorado: son de terceros y el repo es público) | **Hay que aportarlos**, cada uno desde su fuente. Ver `docs/datos.md` |
 | `df_final_features.csv` y `team_matches.csv` | **No** | Los genera el notebook 01 |
 | `chroma_index/` (índice v1) y `chroma_index_v2/` | **No** (`data/chroma_index*/`) | Los generan los notebooks 03 y 05 |
 
@@ -205,9 +205,12 @@ es de unos 60 a 98 %. Un 100 % del orquestador no garantiza que generalice.
 - **Partidos (`la_liga_2014_2025_all_matches_final.csv`).** Procedencia **inferida, no confirmada**: por su esquema (`match_id`, `xg`, `ppda`, `xpts`, `deep`) parece un
   export de [Understat](https://understat.com). El archivo no trae metadatos de origen, así que **su licencia es incierta** y por eso no se redistribuye. Debe verificarse la
   procedencia exacta antes de citarla. Respetamos el `robots.txt` de Understat: no se hace ningún rastreo.
-- **Reglas de Juego 2026/27.** Texto del IFAB (International Football Association Board), usado como fuente de consulta del RAG. Los derechos pertenecen al IFAB.
-- **Normas de Competición Primera y Segunda División 2026/27 y reglamento de LaLiga 2025-2026.** Documentos normativos de LaLiga, usados como fuente de consulta del RAG.
-  Los derechos pertenecen a sus titulares.
+- **Reglas de Juego 2026/27.** Texto del IFAB (International Football Association Board), en español, descargable en <https://theifab.com/documents>. Se usa la variante
+  **«páginas individuales»** (`Reglas de Juego 2026_27_paginas individuales.pdf`): la variante «páginas dobles» tiene otra numeración y las citas de página del sistema dejarían de coincidir.
+  Los derechos pertenecen al IFAB.
+- **Normas de Competición Primera y Segunda División 2026/27.** «Normas Reguladoras y Bases de Competición de los Campeonatos Nacionales de Liga de Primera y Segunda División,
+  temporada 2026-2027», publicadas por la RFEF (LaLiga organiza la competición en coordinación con ella): <https://rfef.es/sites/default/files/2026-06/1._CNL_Primera_y_Segunda_Division.pdf>.
+  Se guarda como `data/Primera_y_Segunda_Division.pdf`. Los derechos pertenecen a sus titulares.
 - **Wikipedia** («Primera División de España» y «El Clásico»). Texto bajo licencia [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.es), con atribución a sus autores.
 - **Modelo de embeddings:** `paraphrase-multilingual-MiniLM-L12-v2` (sentence-transformers). **LLM:** `qwen2.5` servido localmente por Ollama.
 

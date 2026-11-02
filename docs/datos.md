@@ -12,9 +12,9 @@ Los PDF de `data/` son documentos de terceros y el repositorio es público, así
 
 | Archivo | Lo usa | Fuente |
 |---|---|---|
-| `Primera_y_Segunda_Division.pdf` (Normas de Competición Primera/Segunda 2026/27) | 05 | Fuente oficial de la competición; enlace por confirmar |
+| `Primera_y_Segunda_Division.pdf` | 05 | «Normas Reguladoras y Bases de Competición de los Campeonatos Nacionales de Liga de Primera y Segunda División, temporada 2026-2027». Lo publica la **RFEF** (LaLiga organiza en coordinación con ella): <https://rfef.es/sites/default/files/2026-06/1._CNL_Primera_y_Segunda_Division.pdf> (en la RFEF se llama `1._CNL_Primera_y_Segunda_Division.pdf`; hay que renombrarlo) |
 | `reglamento laliga 2025-2026.pdf` | 03 | Fuente oficial de la competición; enlace por confirmar |
-| `Reglas de Juego 2026_27_paginas individuales.pdf` (IFAB) | 03, 05 | IFAB (theifab.org), edición 2026/27; enlace por confirmar |
+| `Reglas de Juego 2026_27_paginas individuales.pdf` | 03, 05 | Reglas de Juego IFAB 2026/27 en español: <https://theifab.com/documents>. Hay variantes «páginas dobles» e «individuales» con numeración distinta; el corpus usa **«páginas individuales»** y las citas de página del sistema dependen de ella |
 | `Primera División de España - Wikipedia, la enciclopedia libre.pdf` | 03 | Artículo «Primera División de España» de es.wikipedia.org, impreso a PDF |
 | `El Clásico - Wikipedia, la enciclopedia libre.pdf` | 03 | Artículo «El Clásico» de es.wikipedia.org, impreso a PDF |
 
