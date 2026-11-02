@@ -1,0 +1,3 @@
+# Dependencias SOLO de desarrollo/pruebas (no entran en la imagen Docker).
+-r requirements.txt
+pytest
