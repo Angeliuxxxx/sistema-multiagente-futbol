@@ -63,6 +63,7 @@ class PredictResponse(BaseModel):
     local: str
     visitante: str
     fecha: str
+    fecha_origen: Literal["usuario", "calendario", "por_defecto"] | None = Field(None, description="De dónde salió la fecha (solo modelo B)")
     probabilidades: dict[str, float]
     resultado_probable: str
     forma_local: dict[str, float]
@@ -72,7 +73,8 @@ class PredictResponse(BaseModel):
 
 @app.get("/health")
 def health() -> dict:
-    return {"estado": "ok"}
+    # La interfaz pinta «datos hasta…» con este valor: así no queda una fecha escrita a mano que se desactualiza.
+    return {"estado": "ok", "datos_hasta": str(prediction_b.datos_hasta().date())}
 
 
 @app.get("/teams")

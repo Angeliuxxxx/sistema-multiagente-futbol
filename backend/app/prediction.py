@@ -47,6 +47,12 @@ def equipos(modelo: str = "b") -> list[str]:
     return sorted(cargar_team_matches()["team"].unique())
 
 
+def equipos_conocidos() -> list[str]:
+    """Todos los equipos que algún modelo conoce. El orquestador reconoce nombres con esta lista (y no con la de B sola):
+    así «Girona vs Villarreal» sigue yendo a predicción aunque Girona no juegue en la temporada actual."""
+    return sorted(set(equipos("a")) | set(equipos("b")))
+
+
 def fecha_por_defecto(tm: pd.DataFrame | None = None) -> pd.Timestamp:
     """Fecha a predecir cuando el usuario no da ninguna: último dato + 7 días, a la hora típica.
 

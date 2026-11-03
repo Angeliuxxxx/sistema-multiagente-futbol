@@ -45,7 +45,7 @@ def test_fecha_por_defecto_no_da_descansos_fuera_de_lo_visto() -> None:
     tm = prediction.cargar_team_matches()
     fecha = prediction.fecha_por_defecto(tm)
     minimo_entrenamiento = _gap_entrenamiento(tm).min()
-    for equipo in prediction.equipos():
+    for equipo in prediction.equipos("a"):
         f = prediction.ultima_forma(equipo, fecha, tm)
         assert f["dias_desde_ultimo_partido"] >= minimo_entrenamiento, equipo
 

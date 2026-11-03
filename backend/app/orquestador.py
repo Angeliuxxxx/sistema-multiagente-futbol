@@ -32,7 +32,7 @@ def _plano(t: str) -> str:
 
 
 # --- Equipos -----------------------------------------------------------------------------------------------------
-# Los nombres reales (/teams) vienen de prediction.equipos(); estos alias cubren cómo los escribe la gente.
+# Los nombres reales (/teams) vienen de prediction.equipos_conocidos(); estos alias cubren cómo los escribe la gente.
 # Alias -> nombre real. "madrid" suelto es el Real Madrid (quien dice "el Madrid" no habla del Atlético).
 ALIAS: dict[str, str] = {
     "barca": "Barcelona", "fc barcelona": "Barcelona", "blaugrana": "Barcelona", "culé": "Barcelona", "cule": "Barcelona",
@@ -105,7 +105,7 @@ class Decision:
 
 def enrutar(pregunta: str, equipos_validos: list[str] | None = None) -> Decision:
     """Decide a qué agente va la pregunta. Reglas en orden de PRIORIDAD: gana la primera que se cumple."""
-    equipos_validos = equipos_validos if equipos_validos is not None else prediction.equipos()
+    equipos_validos = equipos_validos if equipos_validos is not None else prediction.equipos_conocidos()
     texto = _plano(pregunta)
     equipos = detectar_equipos(pregunta, equipos_validos)
     pred = bool(SENAL_PREDICCION.search(texto))
@@ -171,6 +171,7 @@ class PrediccionDetalle(BaseModel):
     fecha_forma: str = Field(..., description="La forma se calculó con los 5 partidos anteriores a esta fecha")
     datos_hasta: str = Field(..., description="Fecha del último dato disponible")
     modelo: Literal["a", "b"] = Field("b", description="Qué modelo produjo la predicción")
+    fecha_origen: Literal["usuario", "calendario", "por_defecto"] | None = Field(None, description="De dónde salió la fecha (solo modelo B)")
     forma_local: dict[str, float]
     forma_visitante: dict[str, float]
 
@@ -204,7 +205,7 @@ def _responder_prediccion(local: str, visitante: str, fecha: date | None) -> tup
     detalle = PrediccionDetalle(
         local=local, visitante=visitante, fecha_forma=r["fecha"], datos_hasta=r["datos_hasta"],
         probabilidades=Probabilidades(local=p["victoria_local"], empate=p["empate"], visitante=p["victoria_visitante"]),
-        modelo=r["modelo"], forma_local=r["forma_local"], forma_visitante=r["forma_visitante"])
+        modelo=r["modelo"], fecha_origen=r.get("fecha_origen"), forma_local=r["forma_local"], forma_visitante=r["forma_visitante"])
     return texto, detalle
 
 
