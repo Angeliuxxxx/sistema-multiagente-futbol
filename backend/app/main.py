@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from . import calendario, prediction, prediction_b, retrieval
+from . import calendario, clasificacion, prediction, prediction_b, registro, retrieval
 from .chat import calentar_llm, router as chat_router
 from .orquestador import router as orquestador_router
 
@@ -19,6 +19,13 @@ def _calentar() -> None:
     # memoria los pesos del modelo de embeddings y la primera pregunta real vuelve a pagar esos ~4 s.
     calentar_llm()
     retrieval.calentar()
+
+
+def _registrar_sin_romper() -> None:
+    try:
+        registro.registrar()
+    except Exception:  # noqa: BLE001 — sin red o sin token el registro puede fallar y la API debe seguir sirviendo
+        pass
 
 
 @asynccontextmanager
@@ -32,6 +39,8 @@ async def lifespan(_: FastAPI):
     # Los calentamientos tardan segundos: van en un hilo aparte para que /health y /predict respondan desde el primer instante.
     # Guardamos la tarea en una variable: asyncio solo guarda referencias débiles y podría recolectarla a medias.
     calentamiento = asyncio.create_task(asyncio.to_thread(_calentar))
+    # Registra los pronósticos de los próximos partidos al arrancar (idempotente): si nadie lo hace a mano, no se pierde ninguno.
+    asyncio.create_task(asyncio.to_thread(_registrar_sin_romper))
     yield
     calentamiento.cancel()
 
@@ -119,4 +128,61 @@ def proximos(n: int = Query(10, ge=1, le=20)) -> list[dict]:
 @app.post("/actualizar", summary="Vuelve a leer la API y recalcula la forma con los partidos de ayer")
 def actualizar() -> dict:
     prediction_b.refrescar()
+    _registrar_sin_romper()
     return {"datos_hasta": str(prediction_b.datos_hasta().date())}
+
+
+class FilaTabla(BaseModel):
+    posicion: int
+    equipo: str
+    pj: int
+    g: int
+    e: int
+    p: int
+    gf: int
+    gc: int
+    dg: int
+    pts: int
+    forma: str = Field(description="Últimos 5 resultados, del más antiguo al más reciente: V, E, D")
+
+
+@app.get("/tabla", response_model=list[FilaTabla], summary="Tabla de posiciones de la temporada en curso")
+def tabla() -> list[dict]:
+    return clasificacion.tabla()
+
+
+class PartidoRegistrado(BaseModel):
+    registrado_en: str = Field(description="Cuándo se guardó el pronóstico (UTC); siempre anterior al inicio del partido")
+    inicio_partido: str
+    jornada: int | None
+    local: str
+    visitante: str
+    probabilidades: dict[str, float]
+    resultado: str | None = Field(None, description="Clase real si el partido ya se jugó")
+    acierto: bool | None = None
+    log_loss: float | None = None
+
+
+class ResumenRegistro(BaseModel):
+    registrados: int
+    jugados: int
+    minimo_para_concluir: int
+    concluyente: bool = Field(description="False mientras haya menos partidos jugados que `minimo_para_concluir`")
+    aciertos: int | None = None
+    acierto_pct: float | None = None
+    log_loss: float | None = None
+    log_loss_frecuencia: float | None = Field(None, description="Log-loss de pronosticar solo con la frecuencia de clases")
+    brier: float | None = None
+    diferencia: float | None = Field(None, description="log_loss − log_loss_frecuencia; negativo = el modelo es mejor")
+    error_2e: float | None = Field(None, description="Dos errores estándar de `diferencia`; si incluye 0, no hay diferencia demostrable")
+
+
+class RespuestaRegistro(BaseModel):
+    resumen: ResumenRegistro
+    partidos: list[PartidoRegistrado]
+
+
+@app.get("/registro", response_model=RespuestaRegistro, summary="Pronósticos registrados antes de cada partido y su acierto")
+def ver_registro() -> dict:
+    filas = registro.puntuar()
+    return {"resumen": registro.resumen(filas), "partidos": sorted(filas, key=lambda f: f["inicio_partido"], reverse=True)}
