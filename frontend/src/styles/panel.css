@@ -25,7 +25,7 @@
 .cifra { display: flex; flex-direction: column; min-width: 0; }
 .cifra-valor { font-family: var(--fuente-titulo); font-weight: 700; font-size: clamp(2.5rem, 7vw, 3.25rem); line-height: 1; white-space: nowrap; }
 .cifra-etiqueta { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--texto-suave); margin-top: .2rem; }
-.barra3 { display: flex; width: 100%; height: 14px; border-radius: 999px; overflow: hidden; margin-top: .75rem; background: var(--superficie-2); gap: 2px; }
+.barra3 { animation: revela .7s ease-out both; display: flex; width: 100%; height: 14px; border-radius: 999px; overflow: hidden; margin-top: .75rem; background: var(--superficie-2); gap: 2px; }
 .barra3 > div { min-width: 0; }
 
 /* Forma con barras espejo: local crece hacia la izquierda, visitante hacia la derecha */
@@ -59,3 +59,47 @@
 .proximo-barra { display: flex; height: 8px; border-radius: 999px; overflow: hidden; gap: 2px; background: var(--superficie); }
 .proximo-barra i { min-width: 0; }
 .proximo-cifras { font-size: .8rem; font-variant-numeric: tabular-nums; text-align: right; }
+
+/* Animación de las barras: se revelan de izquierda a derecha al aparecer un resultado. clip-path (no width) para no recalcular el
+   reparto proporcional. index.css ya anula todas las animaciones con prefers-reduced-motion. */
+@keyframes revela { from { clip-path: inset(0 100% 0 0 round 999px); } to { clip-path: inset(0 0 0 0 round 999px); } }
+.forma-barras .mitad > div { animation: crece .6s ease-out both; }
+.mitad.izq > div { transform-origin: right; }
+.mitad.der > div { transform-origin: left; }
+@keyframes crece { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* Pestañas */
+.pestanas { display: flex; gap: .25rem; margin-bottom: .75rem; border-bottom: 1px solid var(--linea); }
+.pestanas button { background: transparent; color: var(--texto-suave); border-radius: var(--radio-chico) var(--radio-chico) 0 0; border-bottom: 3px solid transparent; font-family: var(--fuente-titulo); font-size: 1.1rem; text-transform: uppercase; letter-spacing: .05em; }
+.pestanas button[aria-selected="true"] { color: var(--texto); border-bottom-color: var(--local); }
+.pestanas button:hover:not(:disabled) { filter: none; color: var(--texto); }
+
+/* Tabla de posiciones */
+.tabla-scroll { overflow-x: auto; }
+.tabla { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.tabla th, .tabla td { padding: .45rem .4rem; text-align: right; border-bottom: 1px solid var(--linea); white-space: nowrap; }
+.tabla thead th { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--texto-suave); font-weight: 600; }
+.tabla th[scope="row"], .tabla thead th:nth-child(2) { text-align: left; font-weight: 500; }
+.tabla td:first-child, .tabla thead th:first-child { text-align: center; color: var(--texto-suave); }
+.tabla .pts { font-family: var(--fuente-titulo); font-weight: 700; font-size: 1.25rem; }
+.forma-letras { display: inline-flex; gap: 2px; }
+.forma-letras i { font-style: normal; font-size: .7rem; font-weight: 700; width: 1.25rem; height: 1.25rem; display: grid; place-items: center; border-radius: 4px; color: #0b1410; }
+.r-V { background: var(--local); }
+.r-E { background: var(--empate); }
+.r-D { background: var(--visitante); }
+
+/* Registro de aciertos */
+.datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); gap: .5rem; margin: .75rem 0; }
+.dato { background: var(--superficie-2); border: 1px solid var(--linea); border-radius: var(--radio-chico); padding: .5rem .6rem; display: flex; flex-direction: column; }
+.dato strong { font-family: var(--fuente-titulo); font-size: 1.9rem; line-height: 1; }
+.dato span { font-size: .75rem; color: var(--texto-suave); margin-top: .2rem; }
+.registro { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.registro li { background: var(--superficie-2); border: 1px solid var(--linea); border-radius: var(--radio-chico); padding: .5rem .75rem; display: grid; grid-template-columns: 1fr auto; gap: .15rem .75rem; }
+.reg-partido { font-weight: 600; overflow-wrap: anywhere; }
+.reg-partido small { color: var(--texto-suave); font-weight: 400; }
+.reg-fecha { font-size: .8rem; color: var(--texto-suave); text-align: right; white-space: nowrap; }
+.reg-probs { grid-column: 1 / -1; font-size: .85rem; color: var(--texto-suave); }
+.reg-estado { grid-column: 1 / -1; font-size: .85rem; font-weight: 600; }
+.reg-estado.ok { color: var(--local); }
+.reg-estado.mal { color: var(--visitante); }
+.reg-estado.pendiente { color: var(--texto-suave); font-weight: 500; }

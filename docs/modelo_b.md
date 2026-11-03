@@ -65,3 +65,16 @@ tramo 1 (`data/modelo_b_params.json`). Se regenera con `python -m scripts.entren
 1. Bajar a mano `SP1.csv` de 2026/27 desde football-data.co.uk (Primera División) y guardarlo como `data/2026-2027.csv`.
 2. `POST /actualizar` (o reiniciar la API): vuelve a leer la API y recalcula la forma.
 3. Opcional: `python -m scripts.entrenar_modelo_b --guardar` para reajustar el modelo con los partidos nuevos.
+
+## Registro de predicciones (evaluación hacia adelante)
+`data/registro_predicciones.jsonl` guarda cada pronóstico de B **antes** del partido; después se puntúa con el resultado real
+(`backend/app/registro.py`). Es la evidencia más fuerte que tiene el proyecto, porque no depende de decisiones tomadas viendo
+los resultados.
+
+- **Solo se añade** (nunca se reescribe), **una vez por partido** (manda la primera predicción) y **nunca con el partido empezado**
+  (`backend/tests/test_registro.py`, probado con sabotajes). El archivo se versiona en Git: la fecha del commit es la prueba externa.
+- Se registra al arrancar la API, con `POST /actualizar` o con `python -m scripts.registro_predicciones registrar` (próximos 10 días).
+- Puntaje: acierto, log-loss, Brier y la diferencia frente a la frecuencia de clases con su error (±2 e.e.). **Con menos de 30 partidos
+  jugados la interfaz dice que todavía no se puede concluir**: una jornada son 10 partidos y el error es mayor que cualquier diferencia.
+- La interfaz lo muestra en la pestaña «Acierto» (`GET /registro`); la pestaña «Posiciones» usa `GET /tabla`.
+- Primer registro: 10 partidos de la jornada 12 (2026-11-06 a 2026-11-08), guardados el 2026-11-03.

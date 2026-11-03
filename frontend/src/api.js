@@ -43,6 +43,8 @@ const post = (ruta, cuerpo) =>
 
 export const obtenerEquipos = (modelo = 'b') => peticion(`/teams?modelo=${modelo}`)
 export const obtenerEstado = () => peticion('/health')
+export const obtenerTabla = () => peticion('/tabla')
+export const obtenerRegistro = () => peticion('/registro')
 export const obtenerProximos = (n = 6) => peticion(`/proximos?n=${n}`)
 
 // /predict y /preguntar describen la predicción con formas distintas; el resto de la app solo ve ESTA forma.
