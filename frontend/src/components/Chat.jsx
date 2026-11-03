@@ -109,10 +109,11 @@ export default function Chat({ onPrediccion, onMostrarPanel }) {
   const [mensajes, setMensajes] = useState([])
   const [texto, setTexto] = useState('')
   const [pensando, setPensando] = useState(false)
-  const final = useRef(null)
+  const lista = useRef(null)
 
-  // Al llegar un mensaje nuevo, bajar hasta él; si no, la respuesta queda fuera de la vista.
-  useEffect(() => { final.current?.scrollIntoView({ block: 'end' }) }, [mensajes, pensando])
+  // Al llegar un mensaje nuevo, bajar hasta él. Se mueve solo el scroll de la lista: scrollIntoView también
+  // desplazaría los contenedores de alrededor (la página o la columna) y sacaría el campo de texto de la vista.
+  useEffect(() => { lista.current?.scrollTo({ top: lista.current.scrollHeight }) }, [mensajes, pensando])
 
   async function enviar(pregunta) {
     const p = pregunta.trim()
@@ -140,13 +141,12 @@ export default function Chat({ onPrediccion, onMostrarPanel }) {
       <h2 id="titulo-chat">Pregunta al sistema</h2>
 
       {/* role="log" + aria-live: el lector de pantalla anuncia cada mensaje nuevo sin perder el foco del campo. */}
-      <ol className="mensajes" role="log" aria-live="polite" aria-label="Conversación">
+      <ol ref={lista} className="mensajes" role="log" aria-live="polite" aria-label="Conversación">
         {mensajes.length === 0 && (
           <li className="vacio">Escribe una pregunta de reglamento o de pronóstico, o prueba un ejemplo.</li>
         )}
         {mensajes.map((m) => <Burbuja key={m.id} m={m} onMostrarPanel={onMostrarPanel} />)}
         {pensando && <li className="respuesta pensando" role="status">Pensando<span aria-hidden="true">…</span></li>}
-        <li ref={final} aria-hidden="true" />
       </ol>
 
       <div className="ejemplos" role="group" aria-label="Preguntas de ejemplo">
