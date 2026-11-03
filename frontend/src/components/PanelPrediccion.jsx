@@ -37,7 +37,15 @@ function Equipo({ nombre, rol }) {
   )
 }
 
-function Probabilidades({ p }) {
+// Anchos de los tres segmentos: cada probabilidad entre la suma (que debería ser 1, pero el redondeo de la API puede
+// desviarla) para que los tres ocupen SIEMPRE el 100 % de la barra.
+export function anchosBarra(p) {
+  const total = RESULTADOS.reduce((acc, [clave]) => acc + p[clave], 0) || 1
+  return RESULTADOS.map(([clave]) => (p[clave] / total) * 100)
+}
+
+export function Probabilidades({ p }) {
+  const anchos = anchosBarra(p)
   return (
     <div className="probabilidades">
       <div className="cifras">
@@ -51,8 +59,10 @@ function Probabilidades({ p }) {
       </div>
       <div className="barra3" role="img"
            aria-label={`Local ${pct(p.local)}, empate ${pct(p.empate)}, visitante ${pct(p.visitante)}`}>
-        {RESULTADOS.map(([clave, , color]) => (
-          <div key={clave} style={{ width: pct(p[clave]), background: color }} />
+        {/* Antes se usaba pct() como ancho: producía «45.3 %» (con espacio), CSS inválido, y los segmentos colapsaban.
+            flex-grow proporcional reparte el ancho restante tras los huecos, así que nunca desborda ni sobra. */}
+        {RESULTADOS.map(([clave, , color], i) => (
+          <div key={clave} data-ancho={anchos[i].toFixed(2)} style={{ flex: `${anchos[i]} 1 0%`, background: color }} />
         ))}
       </div>
     </div>
