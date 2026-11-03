@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { preguntar } from '../api.js'
+import { formatearFecha } from '../fechas.js'
 
 // Nombres legibles de las rutas. Solo es presentación: los valores que devuelve la API no cambian.
 // Si llega una ruta nueva que no está aquí, se muestra tal cual en vez de romper.
@@ -60,7 +61,7 @@ function FichaFuente({ m }) {
     return (
       <div className="ficha-fuente">
         <span className="ficha-titulo">Fuente</span>
-        <p>Modelo XGBoost · datos hasta {m.prediccion.datos_hasta}</p>
+        <p>Modelo XGBoost · datos hasta {formatearFecha(m.prediccion.datos_hasta)}</p>
       </div>
     )
   }

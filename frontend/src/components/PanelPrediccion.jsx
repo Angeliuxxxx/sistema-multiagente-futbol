@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { obtenerEquipos, predecir } from '../api.js'
+import { formatearFecha } from '../fechas.js'
 
 // Comparación de forma con barras espejo. Cada fila: [clave de la API, nombre, pista de lectura].
 // La pista evita leer mal: en goles en contra y PPDA, MENOS es mejor.
@@ -39,12 +40,12 @@ function Equipo({ nombre, rol }) {
 
 // Anchos de los tres segmentos: cada probabilidad entre la suma (que debería ser 1, pero el redondeo de la API puede
 // desviarla) para que los tres ocupen SIEMPRE el 100 % de la barra.
-export function anchosBarra(p) {
+function anchosBarra(p) {
   const total = RESULTADOS.reduce((acc, [clave]) => acc + p[clave], 0) || 1
   return RESULTADOS.map(([clave]) => (p[clave] / total) * 100)
 }
 
-export function Probabilidades({ p }) {
+function Probabilidades({ p }) {
   const anchos = anchosBarra(p)
   return (
     <div className="probabilidades">
@@ -163,7 +164,7 @@ export default function PanelPrediccion({ externa }) {
             <Equipo nombre={resultado.local} rol="local" />
             <div className="marcador-centro">
               <span className="vs">VS</span>
-              <span className="fecha-usada">Forma al {resultado.fecha_forma}</span>
+              <span className="fecha-usada">Forma al {formatearFecha(resultado.fecha_forma)}</span>
               {!fechaPedida && <span className="nota-defecto">fecha por defecto</span>}
             </div>
             <Equipo nombre={resultado.visitante} rol="visitante" />
@@ -185,7 +186,7 @@ export default function PanelPrediccion({ externa }) {
 
           {/* Aviso siempre visible junto al resultado: la predicción usa datos viejos y el usuario debe saberlo. */}
           <p className="aviso">
-            <strong>Datos hasta {resultado.datos_hasta}.</strong> La forma se calculó con los 5 partidos anteriores al {resultado.fecha_forma}; no incluye nada posterior.
+            <strong>Datos hasta {formatearFecha(resultado.datos_hasta)}.</strong> La forma se calculó con los 5 partidos anteriores al {formatearFecha(resultado.fecha_forma)}; no incluye nada posterior.
           </p>
         </div>
       ) : (
