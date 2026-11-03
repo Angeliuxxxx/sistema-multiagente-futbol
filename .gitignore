@@ -8,6 +8,7 @@ __pycache__/
 
 # Datos pesados e índices vectoriales (se regeneran con 03_rag_corpus.ipynb)
 data/*.csv
+data/calendario_cache.json
 # PDFs de terceros (derechos ajenos, el repo es público): se descargan de su fuente, ver docs/datos.md
 data/*.pdf
 data/chroma_db/
