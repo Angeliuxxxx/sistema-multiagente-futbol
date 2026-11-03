@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { preguntar } from '../api.js'
+import { formatearFecha } from '../fechas.js'
 
 // Nombres legibles de las rutas. Solo es presentación: los valores que devuelve la API no cambian.
 // Si llega una ruta nueva que no está aquí, se muestra tal cual en vez de romper.
@@ -35,15 +36,16 @@ function mensajeDeError(e) {
   return `Algo salió mal: ${e.message}`
 }
 
-function Burbuja({ m, onMostrarPanel }) {
-  if (m.rol === 'usuario') return <li className="burbuja usuario">{m.texto}</li>
-  return (
-    <li className={`burbuja sistema${m.error ? ' error' : ''}`}>
-      {m.fuente && <span className={`etiqueta etiqueta-${m.fuente}`}>{ETIQUETA[m.fuente]}</span>}
-      <p>{m.texto}</p>
+// Insignia de ruta: la clase pone el color, pero el TEXTO es lo que identifica la ruta (nunca solo color).
+const CLASE_RUTA = { prediccion: 'pred', conocimiento: 'conoc', aclarar: 'aviso', fuera_de_alcance: 'aviso' }
 
-      {m.fuentes?.length > 0 && (
-        <ul className="fuentes" aria-label="Fuentes citadas">
+// «Ficha de fuente»: de dónde sale la respuesta (CLAUDE.md: toda respuesta indica su fuente). Todo viene de la API.
+function FichaFuente({ m }) {
+  if (m.fuentes?.length > 0) {
+    return (
+      <div className="ficha-fuente">
+        <span className="ficha-titulo">Fuente</span>
+        <ul aria-label="Fuentes citadas">
           {m.fuentes.map((f, i) => (
             <li key={i}>
               {f.documento}
@@ -52,13 +54,42 @@ function Burbuja({ m, onMostrarPanel }) {
             </li>
           ))}
         </ul>
-      )}
+      </div>
+    )
+  }
+  if (m.prediccion) {
+    return (
+      <div className="ficha-fuente">
+        <span className="ficha-titulo">Fuente</span>
+        <p>Modelo XGBoost · datos hasta {formatearFecha(m.prediccion.datos_hasta)}</p>
+      </div>
+    )
+  }
+  if (m.fuente) {
+    return (
+      <div className="ficha-fuente">
+        <span className="ficha-titulo">Fuente</span>
+        <p>{ETIQUETA[m.fuente] ?? m.fuente}</p>
+      </div>
+    )
+  }
+  return null
+}
+
+function Burbuja({ m, onMostrarPanel }) {
+  if (m.rol === 'usuario') return <li className="burbuja usuario">{m.texto}</li>
+  return (
+    <li className={`respuesta${m.error ? ' error' : ''}`}>
+      {m.ruta && <span className={`insignia insignia-${CLASE_RUTA[m.ruta] ?? 'aviso'}`}>{NOMBRE_RUTA[m.ruta] ?? m.ruta}</span>}
+      <p className="respuesta-texto">{m.texto}</p>
 
       {m.prediccion && (
         <button type="button" className="enlace" onClick={() => onMostrarPanel(m.prediccion)}>
           Ver detalle en el panel
         </button>
       )}
+
+      <FichaFuente m={m} />
 
       {m.ruta && (
         <details>
@@ -79,10 +110,11 @@ export default function Chat({ onPrediccion, onMostrarPanel }) {
   const [mensajes, setMensajes] = useState([])
   const [texto, setTexto] = useState('')
   const [pensando, setPensando] = useState(false)
-  const final = useRef(null)
+  const lista = useRef(null)
 
-  // Al llegar un mensaje nuevo, bajar hasta él; si no, la respuesta queda fuera de la vista.
-  useEffect(() => { final.current?.scrollIntoView({ block: 'end' }) }, [mensajes, pensando])
+  // Al llegar un mensaje nuevo, bajar hasta él. Se mueve solo el scroll de la lista: scrollIntoView también
+  // desplazaría los contenedores de alrededor (la página o la columna) y sacaría el campo de texto de la vista.
+  useEffect(() => { lista.current?.scrollTo({ top: lista.current.scrollHeight }) }, [mensajes, pensando])
 
   async function enviar(pregunta) {
     const p = pregunta.trim()
@@ -110,13 +142,12 @@ export default function Chat({ onPrediccion, onMostrarPanel }) {
       <h2 id="titulo-chat">Pregunta al sistema</h2>
 
       {/* role="log" + aria-live: el lector de pantalla anuncia cada mensaje nuevo sin perder el foco del campo. */}
-      <ol className="mensajes" role="log" aria-live="polite" aria-label="Conversación">
+      <ol ref={lista} className="mensajes" role="log" aria-live="polite" aria-label="Conversación">
         {mensajes.length === 0 && (
           <li className="vacio">Escribe una pregunta de reglamento o de pronóstico, o prueba un ejemplo.</li>
         )}
         {mensajes.map((m) => <Burbuja key={m.id} m={m} onMostrarPanel={onMostrarPanel} />)}
-        {pensando && <li className="burbuja sistema pensando" role="status">Pensando<span aria-hidden="true">…</span></li>}
-        <li ref={final} aria-hidden="true" />
+        {pensando && <li className="respuesta pensando" role="status">Pensando<span aria-hidden="true">…</span></li>}
       </ol>
 
       <div className="ejemplos" role="group" aria-label="Preguntas de ejemplo">

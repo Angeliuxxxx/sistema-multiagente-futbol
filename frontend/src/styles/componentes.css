@@ -1,0 +1,10 @@
+/* Piezas comunes: tarjeta, botones, campos. Todo objetivo táctil mide al menos --tactil (44 px). */
+.tarjeta { background: var(--superficie); border: 1px solid var(--linea); border-radius: var(--radio); padding: 1rem; }
+.tarjeta h2 { margin: 0 0 .75rem; font-size: 1.5rem; text-transform: uppercase; letter-spacing: .04em; }
+h3 { font-size: 1.15rem; margin: 1.25rem 0 .5rem; text-transform: uppercase; letter-spacing: .04em; }
+
+button { background: var(--acento); color: var(--acento-texto); border: 0; border-radius: var(--radio-chico); padding: .6rem 1.1rem; min-height: var(--tactil); cursor: pointer; font-weight: 600; }
+button:hover:not(:disabled) { filter: brightness(1.1); }
+button:disabled { background: var(--superficie-2); color: var(--texto-suave); cursor: not-allowed; }
+input, select { min-height: var(--tactil); padding: .55rem .75rem; border: 1px solid #7a9a88; border-radius: var(--radio-chico); background: var(--superficie-2); color: var(--texto); min-width: 0; width: 100%; }
+input::placeholder { color: var(--texto-suave); opacity: 1; }
