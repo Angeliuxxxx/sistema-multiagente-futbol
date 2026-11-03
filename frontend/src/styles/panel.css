@@ -43,3 +43,19 @@
 .forma-nombre small { color: var(--texto-suave); font-size: .75rem; }
 
 .aviso { background: var(--ins-aviso-fondo); color: var(--aviso); border: 1px solid var(--aviso); padding: .7rem .9rem; border-radius: var(--radio-chico); margin: 1.25rem 0 0; line-height: 1.5; }
+
+/* Selector de modelo y próximos partidos */
+.selector-modelo { border: 1px solid var(--linea); border-radius: var(--radio-chico); margin: 0 0 1rem; padding: .5rem .75rem; display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; }
+.selector-modelo legend { font-size: .8rem; color: var(--texto-suave); padding: 0 .25rem; }
+.selector-modelo label { display: inline-flex; align-items: center; gap: .4rem; min-height: var(--tactil); cursor: pointer; }
+.selector-modelo input { width: auto; min-height: 0; accent-color: var(--local); }
+
+.proximos h3 { margin-top: 0; }
+.proximos ul { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: .4rem; }
+.proximo { width: 100%; display: grid; grid-template-columns: 1fr auto; gap: .15rem .75rem; align-items: center; text-align: left; background: var(--superficie-2); color: var(--texto); border: 1px solid var(--linea); border-radius: var(--radio-chico); padding: .5rem .75rem; font-weight: 500; }
+.proximo-partido { overflow-wrap: anywhere; }
+.proximo-partido small { color: var(--texto-suave); }
+.proximo-fecha { font-size: .8rem; color: var(--texto-suave); text-align: right; white-space: nowrap; }
+.proximo-barra { display: flex; height: 8px; border-radius: 999px; overflow: hidden; gap: 2px; background: var(--superficie); }
+.proximo-barra i { min-width: 0; }
+.proximo-cifras { font-size: .8rem; font-variant-numeric: tabular-nums; text-align: right; }

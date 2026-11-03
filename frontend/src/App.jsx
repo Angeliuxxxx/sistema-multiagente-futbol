@@ -1,16 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { obtenerEstado } from './api.js'
+import { formatearFecha } from './fechas.js'
 import Chat from './components/Chat.jsx'
 import PanelPrediccion from './components/PanelPrediccion.jsx'
 import './App.css'
 
-// Fecha fija del dataset (docs/datos.md: los datos NO se actualizan). La cabecera se pinta antes de que exista
-// cualquier predicción y ningún endpoint la devuelve sola, así que vive aquí; en cada resultado se muestra el
-// valor real que manda la API (`datos_hasta`).
-const DATOS_HASTA_CABECERA = '25 may 2025'
-
 export default function App() {
   // El estado compartido vive aquí: el chat escribe la última predicción y el panel la lee.
   const [prediccion, setPrediccion] = useState(null)
+  // Fecha real del último dato, la manda la API (/health): antes era una constante escrita a mano y quedaba desactualizada.
+  const [datosHasta, setDatosHasta] = useState('')
+  useEffect(() => { obtenerEstado().then((e) => setDatosHasta(e.datos_hasta)).catch(() => {}) }, [])
 
   // En pantallas estrechas el panel queda debajo del chat: «ver detalle» lleva hasta él en vez de cambiar de pestaña.
   const mostrarPanel = (p) => {
@@ -35,8 +35,8 @@ export default function App() {
           </div>
         </div>
         <ul className="chips-estado" aria-label="Estado del sistema">
-          <li className="chip-estado ambar">Datos hasta el {DATOS_HASTA_CABECERA}</li>
-          <li className="chip-estado verde">Modelo local · XGBoost</li>
+          {datosHasta && <li className="chip-estado verde">Datos hasta el {formatearFecha(datosHasta)}</li>}
+          <li className="chip-estado verde">XGBoost · modelo B</li>
         </ul>
       </header>
 

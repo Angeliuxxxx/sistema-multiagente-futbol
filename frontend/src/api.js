@@ -41,12 +41,15 @@ async function peticion(ruta, opciones = {}) {
 const post = (ruta, cuerpo) =>
   peticion(ruta, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) })
 
-export const obtenerEquipos = () => peticion('/teams')
+export const obtenerEquipos = (modelo = 'b') => peticion(`/teams?modelo=${modelo}`)
+export const obtenerEstado = () => peticion('/health')
+export const obtenerProximos = (n = 6) => peticion(`/proximos?n=${n}`)
 
 // /predict y /preguntar describen la predicción con formas distintas; el resto de la app solo ve ESTA forma.
-export async function predecir({ local, visitante, fecha }) {
-  const r = await post('/predict', { local, visitante, fecha: fecha || null })
+export async function predecir({ local, visitante, fecha, modelo = 'b' }) {
+  const r = await post('/predict', { local, visitante, fecha: fecha || null, modelo })
   return {
+    modelo: r.modelo,
     local: r.local,
     visitante: r.visitante,
     probabilidades: {
@@ -55,6 +58,7 @@ export async function predecir({ local, visitante, fecha }) {
       visitante: r.probabilidades.victoria_visitante,
     },
     fecha_forma: r.fecha,
+    fecha_origen: r.fecha_origen, // 'calendario' | 'por_defecto' | 'usuario' (solo modelo B)
     datos_hasta: r.datos_hasta,
     forma_local: r.forma_local,
     forma_visitante: r.forma_visitante,
