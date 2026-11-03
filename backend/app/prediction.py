@@ -39,7 +39,11 @@ def cargar_team_matches() -> pd.DataFrame:
     return pd.read_csv(DATA_DIR / "team_matches.csv", parse_dates=["date"])
 
 
-def equipos() -> list[str]:
+def equipos(modelo: str = "b") -> list[str]:
+    """Equipos válidos. El modelo A solo conoce los del histórico (hasta 2025); B, los de la temporada en curso."""
+    if modelo == "b":
+        from . import prediction_b
+        return prediction_b.equipos_b()
     return sorted(cargar_team_matches()["team"].unique())
 
 
@@ -87,7 +91,15 @@ def ultima_forma(equipo: str, fecha: pd.Timestamp, team_matches: pd.DataFrame) -
     }
 
 
-def predecir_partido(local: str, visitante: str, fecha: pd.Timestamp | None = None) -> dict:
+def predecir_partido(local: str, visitante: str, fecha: pd.Timestamp | None = None, modelo: str = "b") -> dict:
+    """Punto de entrada único. `modelo="b"` (por defecto, datos hasta ayer) o `"a"` (xG y PPDA, datos hasta mayo de 2025)."""
+    if modelo == "b":
+        from . import prediction_b
+        return prediction_b.predecir_partido_b(local, visitante, fecha)
+    return predecir_partido_a(local, visitante, fecha)
+
+
+def predecir_partido_a(local: str, visitante: str, fecha: pd.Timestamp | None = None) -> dict:
     if local == visitante:
         raise ValueError("El equipo local y el visitante deben ser distintos.")
     tm, modelo = cargar_team_matches(), cargar_modelo()
@@ -109,6 +121,7 @@ def predecir_partido(local: str, visitante: str, fecha: pd.Timestamp | None = No
 
     probabilidades = {ETIQUETAS[int(c)]: round(float(p), 4) for c, p in zip(modelo.classes_, probs)}
     return {
+        "modelo": "a",
         "fecha": str(fecha.date()),
         "probabilidades": probabilidades,
         "resultado_probable": max(probabilidades, key=probabilidades.get),

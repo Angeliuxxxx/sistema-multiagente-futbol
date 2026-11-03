@@ -163,16 +163,6 @@ class Probabilidades(BaseModel):
     visitante: float = Field(..., description="Probabilidad de victoria visitante (0-1)")
 
 
-class FormaEquipo(BaseModel):
-    """Las 6 features de forma de UN equipo (las home_/away_ del modelo, sin el prefijo)."""
-    forma_goles_favor: float
-    forma_goles_contra: float
-    forma_xg: float
-    forma_puntos: float
-    forma_ppda: float
-    dias_desde_ultimo_partido: float
-
-
 class PrediccionDetalle(BaseModel):
     """Predicción estructurada para que la interfaz dibuje barras y gráficas sin interpretar el texto de `respuesta`."""
     local: str
@@ -180,8 +170,9 @@ class PrediccionDetalle(BaseModel):
     probabilidades: Probabilidades
     fecha_forma: str = Field(..., description="La forma se calculó con los 5 partidos anteriores a esta fecha")
     datos_hasta: str = Field(..., description="Fecha del último dato disponible")
-    forma_local: FormaEquipo
-    forma_visitante: FormaEquipo
+    modelo: Literal["a", "b"] = Field("b", description="Qué modelo produjo la predicción")
+    forma_local: dict[str, float]
+    forma_visitante: dict[str, float]
 
 
 class PreguntarResponse(BaseModel):
@@ -199,23 +190,21 @@ class PreguntarResponse(BaseModel):
 
 
 def _responder_prediccion(local: str, visitante: str, fecha: date | None) -> tuple[str, PrediccionDetalle]:
-    # Los datos terminan en `datos_hasta`. Sin fecha del usuario, prediction usa el último dato + 7 días (no hoy: con hoy
-    # el modelo vería ~500 días sin jugar; ni el día siguiente: daba 0-1 días de descanso, fuera de lo que aprendió).
+    # Sin fecha del usuario, el modelo B usa la del partido en el calendario o, si no está, el día siguiente al último dato.
     f = pd.Timestamp(fecha) if fecha else None
     r = prediction.predecir_partido(local, visitante, f)
     p = r["probabilidades"]
     pct = lambda k: f"{p[k] * 100:.1f} %"   # noqa: E731
     cuando = f"con la forma de sus últimos 5 partidos antes del {r['fecha']}"
-    # Se avisa SIEMPRE de dónde terminan los datos, también si el usuario dio fecha: una fecha posterior usaría la misma forma vieja.
-    cuando += (f" (la forma más reciente disponible; los datos terminan el {r['datos_hasta']}, no es la forma de hoy)"
-               if not fecha else f" (los datos terminan el {r['datos_hasta']}; una fecha posterior usa esa misma forma)")
+    # Se avisa SIEMPRE de dónde terminan los datos. En el modelo B terminan ayer; en A, en mayo de 2025.
+    cuando += f" (datos hasta el {r['datos_hasta']})"
     texto = (f"Predicción {local} (local) vs {visitante} (visitante), {cuando}: "
              f"victoria de {local} {pct('victoria_local')}, empate {pct('empate')}, victoria de {visitante} {pct('victoria_visitante')}. "
              f"Tomé como local al primer equipo que nombraste.")
     detalle = PrediccionDetalle(
         local=local, visitante=visitante, fecha_forma=r["fecha"], datos_hasta=r["datos_hasta"],
         probabilidades=Probabilidades(local=p["victoria_local"], empate=p["empate"], visitante=p["victoria_visitante"]),
-        forma_local=FormaEquipo(**r["forma_local"]), forma_visitante=FormaEquipo(**r["forma_visitante"]))
+        modelo=r["modelo"], forma_local=r["forma_local"], forma_visitante=r["forma_visitante"])
     return texto, detalle
 
 
