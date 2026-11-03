@@ -26,7 +26,9 @@ Backend FastAPI, frontend React (chat + dashboard), ChromaDB, LangChain. Una sol
   (límite ~128 tokens: chunks de ≤500 caracteres). Metadata por chunk: `documento`, `seccion`, `pagina`, `division`.
 - Corpus: Normas de Competición Primera/Segunda 2026/27, Reglas de Juego IFAB 2026/27 y 2 PDFs de Wikipedia.
 - Alcance: solo LaLiga Primera División. Los artículos de Segunda de las Normas (`division == "segunda"`) se excluyen de la recuperación (embeddings y BM25) salvo que la pregunta mencione "segunda", porque Art. 10 (Primera) y Art. 17 (Segunda) son casi idénticos y el segundo contaminaba las respuestas de desempate.
-- Datos: NO se actualizan; terminan el 2025-05-25. El dataset parece de Understat, que prohíbe el rastreo (robots.txt) y se respeta; football-data.org no trae xG/PPDA y mezclar fuentes reabriría las 12 features. Ver `docs/datos.md`.
+- Datos: el modelo A usa el dataset (probablemente de Understat, que prohíbe el rastreo) que termina el 2025-05-25 y NO se toca. Para
+  datos actuales hay un **modelo B** (sin xG ni PPDA; tiros en su lugar) con CSV de football-data.co.uk descargados a mano
+  (su robots.txt veta a los rastreadores de IA: nada automático los baja) y la API de football-data.org. Ver `docs/modelo_b.md`.
 - LLM: Ollama `qwen2.5:7b` en desarrollo, siempre detrás de la interfaz de LangChain para poder cambiarlo
   con una línea. Decisión de LLM para el despliegue: pendiente.
 

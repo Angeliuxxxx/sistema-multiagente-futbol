@@ -31,22 +31,19 @@ CC BY-SA; los PDF no traen el pie de licencia, así que la versión exacta no co
   `away_xpts`, `season_mapped`.
 - Las 12 features del modelo salen de aquí con `shift(1)` (ver CLAUDE.md).
 
-## Decisión: no actualizar los datos
-El dataset **no se actualiza**. Understat prohíbe el rastreo (`robots.txt` con `Disallow: /`) y lo respetamos: no se hacen
-peticiones al sitio ni se usan librerías de scraping.
+## Decisión: datos actualizados con un segundo modelo (B), sin tocar el modelo A
+Esta sección **sustituye** a la decisión anterior («no actualizar los datos»). Seguimos sin rastrear Understat (su `robots.txt` lo
+prohíbe) y el dataset del modelo A no cambia: termina el 2025-05-25. Para predecir partidos actuales se añade un **modelo B** que no usa
+xG ni PPDA, con datos de football-data.co.uk (CSV descargados a mano; su `robots.txt` veta a los rastreadores de IA) y de la
+API oficial de football-data.org (token gratis en `.env`). Detalle, resultados y limitaciones: `docs/modelo_b.md`.
 
-Alternativas descartadas:
-- **football-data.org:** tiene API pública, pero no trae xG ni PPDA.
-- **Mezclar fuentes** (histórico Understat + partidos recientes de otra): el modelo usa `forma_xg` y `forma_ppda`; sin esas
-  columnas en los datos nuevos habría que reentrenar sin ellas, lo que reabre la decisión de las 12 features y cambia el
-  modelo ya evaluado.
+Qué se conserva: el modelo A con sus 12 features y su evaluación (decisión del proyecto); sigue accesible con `modelo="a"`.
+Qué se reabre: solo se prueba, como ablación, qué pasa al sustituir xG y PPDA por tiros; el resultado (sin diferencia demostrable
+en el mismo test) está en `docs/modelo_b.md`.
 
-## Limitaciones y trabajo futuro
-- Los pronósticos usan la forma de los últimos 5 partidos **a mayo de 2025** (último dato: 2025-05-25). No reflejan fichajes,
-  lesiones ni resultados posteriores; para una fecha actual el modelo extrapola desde una forma antigua.
+## Limitaciones del modelo A
+- Los pronósticos de A usan la forma de los últimos 5 partidos **a mayo de 2025**; no reflejan nada posterior.
 - Equipos que no jugaron en Primera en 2024/25 (p. ej. Cádiz, Almería, Granada) tienen su forma de temporadas anteriores.
-- Actualizar exigiría una fuente **con licencia** que incluya xG y PPDA (así no cambian las 12 features ni hay que reentrenar
-  por faltar columnas). Si aparece, bastaría regenerar `team_matches.csv` y, solo si cambia la distribución, reentrenar.
 
 ## Desfase entrenamiento-inferencia (`dias_desde_ultimo_partido`)
 
