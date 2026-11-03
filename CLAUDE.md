@@ -10,6 +10,10 @@ Backend FastAPI, frontend React (chat + dashboard), ChromaDB, LangChain. Una sol
 - `/frontend` — React (por crear)
 - `/docs` — notas explicativas, diagrama de arquitectura
 
+## Contexto académico
+- Entrega actual: proyecto final de **Desarrollo de Proyectos Computacionales** (9.º semestre): exposición de **15 minutos** ante un jurado de 5 maestros, la semana del 23 de noviembre de 2026. Prioridad: calificación y defensa.
+- Más adelante podría convertirse en proyecto de titulación; por eso el repo usa el nombre «tesis», pero hoy no es el objetivo. No ampliar el alcance por ese motivo.
+
 ## Estado
 - Fase 1 (EDA + features) y Fase 2 (modelo) cerradas.
 - Fase 3 (RAG): reconstruyendo el corpus v2 y eligiendo el LLM. Luego: orquestador, API, UI, despliegue.
