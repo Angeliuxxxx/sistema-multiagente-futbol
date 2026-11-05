@@ -11,6 +11,11 @@ import pandas as pd
 
 from . import calendario, resultados as R
 
+# Umbral de «forma desactualizada». Las pausas normales de la liga (parón de selecciones, Navidad) son de ~2 semanas, así
+# que 30 días no da falsas alarmas. Con más, la «forma» sale de partidos viejos y `dias_desde_ultimo_partido` toma valores
+# (p. ej. 189) que el modelo no vio al entrenar: las probabilidades salen extremas y no son fiables. Solo se advierte;
+# no se cambian las probabilidades.
+MAX_DIAS_SIN_PARTIDO = 30
 ETIQUETAS = {0: "victoria_visitante", 1: "empate", 2: "victoria_local"}
 
 
@@ -73,10 +78,17 @@ def predecir_partido_b(local: str, visitante: str, fecha: pd.Timestamp | None = 
     probabilidades = {ETIQUETAS[int(c)]: round(float(p), 4) for c, p in zip(modelo.classes_, probs)}
     # Si el partido es anterior o igual al último dato, el modelo final YA lo vio al entrenar: el resultado no es una
     # predicción fuera de muestra y no sirve para medir qué tan bueno es el modelo. Se avisa en vez de callarlo.
-    aviso = None
+    avisos = []
     if fecha.normalize() <= datos_hasta().normalize():
-        aviso = (f"La fecha ({fecha.date()}) es anterior o igual al último dato ({datos_hasta().date()}): el modelo final "
-                 "ya vio este partido al entrenar, así que no es una predicción fuera de muestra.")
+        avisos.append(f"La fecha ({fecha.date()}) es anterior o igual al último dato ({datos_hasta().date()}): el modelo final "
+                      "ya vio este partido al entrenar, así que no es una predicción fuera de muestra.")
+    # Un solo texto, con el equipo que más lleva sin jugar (el dato más fuera de lo normal).
+    dias, equipo_viejo = max((forma["home"]["dias_desde_ultimo_partido"], local),
+                             (forma["away"]["dias_desde_ultimo_partido"], visitante))
+    if dias > MAX_DIAS_SIN_PARTIDO:
+        avisos.append(f"Forma desactualizada: han pasado {int(dias)} días desde el último partido conocido de {equipo_viejo}; "
+                      "la predicción es poco fiable.")
+    aviso = " ".join(avisos) or None
     redondear = lambda d: {k: round(float(v), 3) for k, v in d.items()}  # noqa: E731
     return {
         "modelo": "b",

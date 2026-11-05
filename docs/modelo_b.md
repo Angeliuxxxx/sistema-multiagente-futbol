@@ -54,6 +54,7 @@ demostrable. B2 − cuotas = +0,0829 ± 0,0277: **las casas de apuestas son clar
 - No se puede: decir que B (ni A) predice mejor que el azar informado por la frecuencia de clases; los intervalos incluyen 0 con
   ~1.100 y ~500 partidos. Ni acercarlo al mercado: las cuotas llevan información que el modelo no tiene (lesiones, alineaciones, mercado).
 - La utilidad de B es la **actualidad** y la transparencia (se sabe qué lo alimenta y cuánto vale), no una precisión superior.
+- Solo es fiable para partidos cercanos a los datos: para fechas lejanas (más de 30 días desde el último partido conocido de un equipo) el sistema añade un aviso de «forma desactualizada»; no corrige las probabilidades.
 - Limitaciones: equipos recién ascendidos con pocos partidos en Primera; equipos que vuelven tras años (la «forma» sale de su última
   etapa, con descansos de cientos de días); los tiros de los partidos que solo vienen de la API son desconocidos hasta que se baje un CSV nuevo.
 

@@ -174,6 +174,7 @@ class PrediccionDetalle(BaseModel):
     fecha_origen: Literal["usuario", "calendario", "por_defecto"] | None = Field(None, description="De dónde salió la fecha (solo modelo B)")
     forma_local: dict[str, float]
     forma_visitante: dict[str, float]
+    aviso: str | None = Field(None, description="Solo modelo B: fecha ya vista al entrenar o forma desactualizada (más de 30 días sin partido)")
 
 
 class PreguntarResponse(BaseModel):
@@ -202,10 +203,12 @@ def _responder_prediccion(local: str, visitante: str, fecha: date | None) -> tup
     texto = (f"Predicción {local} (local) vs {visitante} (visitante), {cuando}: "
              f"victoria de {local} {pct('victoria_local')}, empate {pct('empate')}, victoria de {visitante} {pct('victoria_visitante')}. "
              f"Tomé como local al primer equipo que nombraste.")
+    if r.get("aviso"):
+        texto += f" Aviso: {r['aviso']}"  # el chat no dibuja el panel, así que el aviso debe ir también en el texto
     detalle = PrediccionDetalle(
         local=local, visitante=visitante, fecha_forma=r["fecha"], datos_hasta=r["datos_hasta"],
         probabilidades=Probabilidades(local=p["victoria_local"], empate=p["empate"], visitante=p["victoria_visitante"]),
-        modelo=r["modelo"], fecha_origen=r.get("fecha_origen"), forma_local=r["forma_local"], forma_visitante=r["forma_visitante"])
+        modelo=r["modelo"], fecha_origen=r.get("fecha_origen"), forma_local=r["forma_local"], forma_visitante=r["forma_visitante"], aviso=r.get("aviso"))
     return texto, detalle
 
 
