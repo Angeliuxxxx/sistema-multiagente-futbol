@@ -36,8 +36,8 @@ Diagramas de componentes, de flujo y de secuencia, y las decisiones con su porqu
 |---|---|
 | Ambos modos | [Ollama](https://ollama.com) corriendo en tu máquina con el modelo descargado: `ollama pull qwen2.5:7b`. Se probó en una GPU de 6 GB; en CPU será más lento |
 | Docker | Docker con Compose v2 |
-| Desarrollo | Python 3.10 o superior (el entorno de desarrollo y la imagen usan 3.14), Node.js y npm |
-| Datos | La carpeta `data/` con `modelo_predictivo_laliga.pkl`, `team_matches.csv` y `chroma_index_v2/`. Ver la sección siguiente: **no vienen completos en el repositorio** |
+| Desarrollo | Python 3.10 o superior (el entorno de desarrollo y la imagen usan 3.14; la instalación limpia se probó con 3.14), Node.js y npm. **Unos 6,5 GB de disco para el entorno virtual**: `sentence-transformers` trae PyTorch con CUDA desde PyPI. Si tu `/tmp` es pequeño o está en RAM (WSL2, algunos Linux), `pip` falla con «No space left on device»: instala con `TMPDIR=$HOME/tmp pip install -r backend/requirements.txt`. Sin GPU puedes instalar antes `torch` CPU como hace el Dockerfile |
+| Datos | La carpeta `data/` con `la_liga_2014_2025_all_matches_final.csv`, `team_matches.csv`, `chroma_index_v2/` y, para el modelo B actualizado, `2025-2026.csv` y `2026-2027.csv` (los `.pkl` ya vienen en Git). Con eso la API arrancó en un clon limpio (04/11/2026). Ver la sección siguiente: **no vienen completos en el repositorio** |
 
 Sin servicios de pago: todo corre en local.
 
@@ -96,7 +96,7 @@ puede actualizarse hasta ayer. Resultados y números honestos (B ≈ A, ninguno 
 | Partidos de 2025/26 y 2026/27 (goles, tiros) | [football-data.co.uk](https://www.football-data.co.uk) (Primera División, `SP1.csv`) | **Descarga manual**: guarda 2025/26 como `data/2025-2026.csv` y 2026/27 como `data/2026-2027.csv`. No hay descarga automática (ver «Créditos») |
 | Calendario, próximos partidos y resultados posteriores al último CSV | API de [football-data.org](https://www.football-data.org) (plan gratuito) | Token en `.env` como `FOOTBALL_DATA_KEY` (ver `.env.example`). Esos partidos llegan sin tiros |
 
-**Caché y sin red.** La API guarda su respuesta en `data/calendario_cache.json` (vigente 6 h). Sin token o sin conexión se usa la última caché, así que
+**Caché y sin red.** (Probado en un clon limpio, sin token ni caché: `/proximos` responde `[]` con HTTP 200 y `/predict` usa los CSV.) La API guarda su respuesta en `data/calendario_cache.json` (vigente 6 h). Sin token o sin conexión se usa la última caché, así que
 `/proximos` **solo funciona sin red si esa caché ya existe** (una vez que se ejecutó con token y red); sin caché devuelve una lista vacía. `/predict`, `/tabla` y
 `/registro` siguen funcionando con los CSV.
 
@@ -159,8 +159,10 @@ cd backend
 python -m pytest tests -v
 ```
 
-Usa `python -m pytest` y no `pytest` a secas: así `backend/` queda en el `sys.path` y `from app import ...` funciona. Hoy hay 4 pruebas, todas
-sobre un único riesgo: que `dias_desde_ultimo_partido` se calcule en inferencia distinto que al entrenar (ver `docs/datos.md`). No hay pruebas automáticas
+Usa `python -m pytest` y no `pytest` a secas: así `backend/` queda en el `sys.path` y `from app import ...` funciona. Hoy hay 18 pruebas (verificadas el 04/11/2026):
+el desfase de `dias_desde_ultimo_partido` (ver `docs/datos.md`), el modelo B (sin fuga, nombres, duplicados de la API entre temporadas y aviso de fecha pasada),
+el registro de predicciones y `REGISTRAR_AL_ARRANCAR`. Sin pytest también corren: `python -m tests.test_modelo_b`, `python -m tests.test_registro` y `python -m tests.test_arranque`.
+Todas usan archivos temporales y calendario falso: no tocan la red ni el registro real. No hay pruebas automáticas
 del orquestador ni del RAG; esos se miden con los scripts de `backend/scripts/`.
 
 ## Resultados
