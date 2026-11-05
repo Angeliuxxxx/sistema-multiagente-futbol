@@ -154,6 +154,8 @@ def tabla() -> list[dict]:
 
 class PartidoRegistrado(BaseModel):
     registrado_en: str = Field(description="Cuándo se guardó el pronóstico (UTC); siempre anterior al inicio del partido")
+    version_modelo: str | None = Field(None, description="Huella (sha256, 12 caracteres) del .pkl que hizo el pronóstico")
+    commit_codigo: str | None = Field(None, description="Commit del código al registrar; ausente en los registros anteriores a este campo")
     inicio_partido: str
     jornada: int | None
     local: str
@@ -168,6 +170,7 @@ class ResumenRegistro(BaseModel):
     registrados: int
     jugados: int
     minimo_para_concluir: int
+    versiones: dict[str, int] = Field(default_factory=dict, description="Pronósticos registrados por versión del modelo (todas); las cifras de abajo son solo de la versión actual")
     concluyente: bool = Field(description="False mientras haya menos partidos jugados que `minimo_para_concluir`")
     aciertos: int | None = None
     acierto_pct: float | None = None
