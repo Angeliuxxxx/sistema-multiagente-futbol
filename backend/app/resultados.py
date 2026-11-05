@@ -57,19 +57,25 @@ def _reciente(nombre: str) -> pd.DataFrame:
     return out
 
 
+def _temporada(fecha: pd.Timestamp) -> int:
+    """Año en que EMPIEZA la temporada de esa fecha: de julio en adelante es la que arranca ese año, antes es la anterior."""
+    return fecha.year if fecha.month >= 7 else fecha.year - 1
+
+
 def _completar_con_api(df: pd.DataFrame) -> pd.DataFrame:
     """Añade los partidos jugados DESPUÉS del último CSV (la API los publica antes de que haya CSV nuevo).
 
     Llegan sin tiros (la API no los trae): las medias de forma ignoran esos huecos. Se descarta lo que ya está en el CSV
-    (misma pareja local-visitante en la temporada en curso) para que nada cuente doble.
+    (misma pareja local-visitante en la MISMA temporada) para que nada cuente doble. La clave usa la temporada y no el año
+    natural: una pareja que jugó en marzo de 2026 (25/26) y vuelve en noviembre de 2026 (26/27) no es un duplicado.
     """
     from . import calendario  # import tardío: calendario importa este módulo
     nuevos = calendario.terminados()
     if nuevos.empty:
         return df
     nuevos = nuevos[nuevos["date"].dt.normalize() >= df["date"].max().normalize()]
-    ya = set(zip(df["home_team"], df["away_team"], df["date"].dt.year))
-    nuevos = nuevos[[(h, a, d.year) not in ya for h, a, d in zip(nuevos["home_team"], nuevos["away_team"], nuevos["date"])]]
+    ya = set(zip(df["home_team"], df["away_team"], df["date"].map(_temporada)))
+    nuevos = nuevos[[(h, a, _temporada(d)) not in ya for h, a, d in zip(nuevos["home_team"], nuevos["away_team"], nuevos["date"])]]
     return pd.concat([df, nuevos], ignore_index=True).sort_values("date").reset_index(drop=True)
 
 

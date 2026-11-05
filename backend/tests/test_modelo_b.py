@@ -47,6 +47,39 @@ def test_nombres_unificados() -> None:
     assert {"Atletico Madrid", "Real Betis", "Racing Santander", "Real Oviedo"} <= equipos
 
 
+def _con_calendario_falso(csv: pd.DataFrame, api: pd.DataFrame) -> pd.DataFrame:
+    """Ejecuta `_completar_con_api` con un calendario falso (sin red) y lo deja como estaba, pase lo que pase."""
+    from app import calendario
+    original = calendario.terminados
+    calendario.terminados = lambda: api
+    try:
+        return R._completar_con_api(csv)
+    finally:
+        calendario.terminados = original
+
+
+def _partido(fecha: str, local: str, visitante: str) -> dict:
+    return {"date": pd.Timestamp(fecha), "home_team": local, "away_team": visitante, "home_goals": 1, "away_goals": 0,
+            "home_shots": np.nan, "away_shots": np.nan, "home_sot": np.nan, "away_sot": np.nan}
+
+
+def test_api_anade_revancha_de_otra_temporada() -> None:
+    # A–B se jugó en marzo de 2026 (temporada 25/26) y vuelve en noviembre de 2026 (26/27): el partido nuevo NO es un duplicado.
+    # Con la clave (local, visitante, año natural) ambos caen en 2026 y se perdía el de noviembre.
+    csv = pd.DataFrame([_partido("2026-03-01 20:00", "A", "B"), _partido("2026-11-01 20:00", "C", "D")], columns=R.COLUMNAS)
+    api = pd.DataFrame([_partido("2026-11-08 20:00", "A", "B")], columns=R.COLUMNAS)
+    out = _con_calendario_falso(csv, api)
+    assert len(out) == 3 and (out["date"] == pd.Timestamp("2026-11-08 20:00")).any(), "la revancha de otra temporada debe entrar"
+
+
+def test_api_no_duplica_partido_de_la_misma_temporada() -> None:
+    # El mismo partido ya está en el CSV (aunque la API lo escriba con otra hora): no debe contar doble.
+    csv = pd.DataFrame([_partido("2026-11-01 20:00", "A", "B")], columns=R.COLUMNAS)
+    api = pd.DataFrame([_partido("2026-11-01 20:00", "A", "B"), _partido("2026-11-02 20:00", "E", "F")], columns=R.COLUMNAS)
+    out = _con_calendario_falso(csv, api)
+    assert len(out) == 2 and not out.duplicated(["home_team", "away_team", "date"]).any()
+
+
 if __name__ == "__main__":
     for nombre, f in list(globals().items()):
         if nombre.startswith("test_"):
