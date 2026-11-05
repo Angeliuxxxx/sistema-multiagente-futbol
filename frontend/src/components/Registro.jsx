@@ -14,12 +14,13 @@ function Dato({ valor, etiqueta }) {
 // El intervalo es diferencia ± error_2e. Solo si el intervalo completo queda de un lado de 0 se puede afirmar algo.
 function Veredicto({ r }) {
   const margen = r.error_2e
+  if (r.jugados === 0) {
+    return <>Todavía no se ha jugado ninguno de los {r.registrados} partidos pronosticados. Cuando terminen, aquí verás cuánto acertó el modelo y cómo se compara con no saber nada.</>
+  }
   if (!r.concluyente) {
     return (
       <>
-        <strong>Todavía no se puede concluir nada.</strong> Hay {r.jugados} partidos jugados y hacen falta al menos {r.minimo_para_concluir}.
-        {margen != null && <> El margen todavía es amplio (± {margen}): no se puede concluir.</>}
-        {' '}El log-loss es más bajo cuanto mejor (menor es mejor).
+        Van {r.jugados} partidos jugados. Con tan pocos, el margen de error{margen != null && <> (± {margen})</>} es mayor que cualquier diferencia entre el modelo y «no saber nada», así que todavía no se puede concluir.
       </>
     )
   }
@@ -42,6 +43,8 @@ export function ResumenYPartidos({ datos }) {
             <Dato valor={r.log_loss} etiqueta="log-loss del modelo" />
             <Dato valor={r.log_loss_frecuencia} etiqueta="log-loss sin saber nada" />
           </div>
+          {/* Qué significa el log-loss: va junto a las cifras (no en el aviso) para que el aviso solo diga qué se puede concluir. */}
+          <p className="nota-chica">Log-loss: mide qué tan buenas son las probabilidades; menor es mejor.</p>
           {/* Aviso honesto SIEMPRE visible: con pocos partidos las cifras no prueban nada. */}
           <p className="aviso"><Veredicto r={r} /></p>
           <h3>Partidos</h3>
