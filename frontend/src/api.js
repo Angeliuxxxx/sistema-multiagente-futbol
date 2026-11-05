@@ -62,6 +62,7 @@ export async function predecir({ local, visitante, fecha, modelo = 'b' }) {
     fecha_forma: r.fecha,
     fecha_origen: r.fecha_origen, // 'calendario' | 'por_defecto' | 'usuario' (solo modelo B)
     datos_hasta: r.datos_hasta,
+    aviso: r.aviso ?? null, // fecha pasada: el modelo ya vio ese partido al entrenar (solo modelo B)
     forma_local: r.forma_local,
     forma_visitante: r.forma_visitante,
   }

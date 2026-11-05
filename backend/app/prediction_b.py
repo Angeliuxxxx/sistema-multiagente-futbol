@@ -71,6 +71,12 @@ def predecir_partido_b(local: str, visitante: str, fecha: pd.Timestamp | None = 
     columnas = list(modelo.feature_names_in_)
     probs = modelo.predict_proba(pd.DataFrame([fila])[columnas])[0]
     probabilidades = {ETIQUETAS[int(c)]: round(float(p), 4) for c, p in zip(modelo.classes_, probs)}
+    # Si el partido es anterior o igual al último dato, el modelo final YA lo vio al entrenar: el resultado no es una
+    # predicción fuera de muestra y no sirve para medir qué tan bueno es el modelo. Se avisa en vez de callarlo.
+    aviso = None
+    if fecha.normalize() <= datos_hasta().normalize():
+        aviso = (f"La fecha ({fecha.date()}) es anterior o igual al último dato ({datos_hasta().date()}): el modelo final "
+                 "ya vio este partido al entrenar, así que no es una predicción fuera de muestra.")
     redondear = lambda d: {k: round(float(v), 3) for k, v in d.items()}  # noqa: E731
     return {
         "modelo": "b",
@@ -81,4 +87,5 @@ def predecir_partido_b(local: str, visitante: str, fecha: pd.Timestamp | None = 
         "forma_local": redondear(forma["home"]),
         "forma_visitante": redondear(forma["away"]),
         "datos_hasta": str(datos_hasta().date()),
+        "aviso": aviso,
     }

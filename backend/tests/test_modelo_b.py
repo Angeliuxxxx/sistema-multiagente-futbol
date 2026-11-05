@@ -80,6 +80,30 @@ def test_api_no_duplica_partido_de_la_misma_temporada() -> None:
     assert len(out) == 2 and not out.duplicated(["home_team", "away_team", "date"]).any()
 
 
+def _predecir_con_datos_csv(fecha: pd.Timestamp) -> dict:
+    """Predice con la tabla del CSV (sin API) y sin calendario, y restaura lo reemplazado pase lo que pase."""
+    from app import calendario, prediction_b
+    tabla, proximos = prediction_b.cargar_tabla, calendario.proximos
+    prediction_b.cargar_tabla = lambda: R.a_equipo_partido(R.cargar_partidos())
+    calendario.proximos = lambda n=None: []
+    try:
+        return prediction_b.predecir_partido_b("Barcelona", "Real Madrid", fecha)
+    finally:
+        prediction_b.cargar_tabla, calendario.proximos = tabla, proximos
+
+
+def test_aviso_si_la_fecha_ya_pasó() -> None:
+    ultimo = R.cargar_partidos()["date"].max()
+    for fecha in (pd.Timestamp("2025-09-01"), ultimo.normalize()):  # claramente pasada y justo el último día con datos
+        r = _predecir_con_datos_csv(fecha)
+        assert r["aviso"] and "fuera de muestra" in r["aviso"], fecha
+
+
+def test_sin_aviso_si_la_fecha_es_futura() -> None:
+    ultimo = R.cargar_partidos()["date"].max()
+    assert _predecir_con_datos_csv(ultimo.normalize() + pd.Timedelta(days=3))["aviso"] is None
+
+
 if __name__ == "__main__":
     for nombre, f in list(globals().items()):
         if nombre.startswith("test_"):

@@ -78,6 +78,7 @@ class PredictResponse(BaseModel):
     forma_local: dict[str, float]
     forma_visitante: dict[str, float]
     datos_hasta: str
+    aviso: str | None = Field(None, description="Solo modelo B: presente si `fecha` es anterior o igual a `datos_hasta`. El modelo final ya vio ese partido al entrenar, así que el resultado no es una predicción fuera de muestra.")
 
 
 @app.get("/health")
