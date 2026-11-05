@@ -204,6 +204,9 @@ export default function PanelPrediccion({ externa }) {
             <Equipo nombre={resultado.visitante} rol="visitante" />
           </div>
 
+          {/* Fecha pasada: el modelo ya vio ese partido al entrenar. Se muestra antes de las cifras para que no se lean como pronóstico real. */}
+          {resultado.aviso && <p className="aviso" role="alert">{resultado.aviso}</p>}
+
           <Probabilidades p={resultado.probabilidades} />
 
           <h3>Forma reciente (últimos 5 partidos)</h3>

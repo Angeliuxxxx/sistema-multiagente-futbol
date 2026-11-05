@@ -11,8 +11,11 @@ Garantías (cada una tiene su prueba en tests/test_registro.py):
 """
 import hashlib
 import json
+import subprocess
+from collections import Counter
 from datetime import datetime, timezone
 from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -36,11 +39,23 @@ def _version_modelo() -> str:
     return hashlib.sha256((R.DATA_DIR / "modelo_predictivo_laliga_b.pkl").read_bytes()).hexdigest()[:12]
 
 
+def _commit_codigo() -> str:
+    """Commit del código con que se hizo el pronóstico. Nunca debe romper el registro: sin git, sin carpeta .git o
+    con cualquier fallo devuelve «desconocido» (un pronóstico sin commit vale más que un pronóstico perdido)."""
+    try:
+        r = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=Path(__file__).resolve().parent,
+                           capture_output=True, text=True, timeout=5)
+        return r.stdout.strip() if r.returncode == 0 and r.stdout.strip() else "desconocido"
+    except Exception:  # noqa: BLE001 — git ausente, timeout, permisos...: da igual la causa
+        return "desconocido"
+
+
 def registrar(ahora: datetime | None = None, horizonte_dias: int = HORIZONTE_DIAS) -> list[dict]:
     """Registra los partidos próximos que aún no estén registrados. Devuelve SOLO los nuevos."""
     ahora = ahora or datetime.now(timezone.utc)
     limite = ahora + pd.Timedelta(days=horizonte_dias)
     ya = {(r["local"], r["visitante"], r["temporada"]) for r in _leer()}
+    commit = _commit_codigo()  # una sola vez por llamada: es el mismo código para todos los pronósticos de la tanda
     nuevos = []
     for p in calendario.proximos():
         inicio = datetime.fromisoformat(p["fecha"].replace("Z", "+00:00"))
@@ -54,7 +69,7 @@ def registrar(ahora: datetime | None = None, horizonte_dias: int = HORIZONTE_DIA
         nuevos.append({
             "registrado_en": ahora.isoformat(timespec="seconds"), "temporada": calendario.TEMPORADA_ACTUAL,
             "jornada": p["jornada"], "inicio_partido": p["fecha"], "local": p["local"], "visitante": p["visitante"],
-            "modelo": "b", "version_modelo": _version_modelo(), "datos_hasta": r["datos_hasta"],
+            "modelo": "b", "version_modelo": _version_modelo(), "commit_codigo": commit, "datos_hasta": r["datos_hasta"],
             "probabilidades": r["probabilidades"],
         })
     if nuevos:
@@ -85,11 +100,17 @@ def _resultados_reales() -> dict[tuple[str, str], str]:
     return out
 
 
-def puntuar() -> list[dict]:
-    """Cada predicción registrada con su resultado y sus puntajes (si el partido ya se jugó)."""
+def puntuar(version_modelo: str | None = None) -> list[dict]:
+    """Cada predicción registrada con su resultado y sus puntajes (si el partido ya se jugó).
+
+    Solo cuenta la versión del modelo pedida (por defecto, la actual): mezclar pronósticos de modelos distintos en una
+    sola cifra impediría decir cuál de ellos acierta. Los registros viejos sin `commit_codigo` se leen igual (`.get`)."""
+    version_modelo = version_modelo or _version_modelo()
     reales, freq = _resultados_reales(), _frecuencias()
     filas = []
     for r in _leer():
+        if r.get("version_modelo") != version_modelo:
+            continue
         real = reales.get((r["local"], r["visitante"]))
         fila = {**r, "resultado": real}
         if real:
@@ -105,11 +126,14 @@ def puntuar() -> list[dict]:
     return filas
 
 
-def resumen(filas: list[dict] | None = None) -> dict:
-    filas = puntuar() if filas is None else filas
+def resumen(filas: list[dict] | None = None, version_modelo: str | None = None) -> dict:
+    filas = puntuar(version_modelo) if filas is None else filas
     jugados = [f for f in filas if f["resultado"]]
+    # `versiones` cuenta TODOS los pronósticos del archivo por versión (no solo la puntuada), para que se vea de un
+    # vistazo si hay registros de más de un modelo y por qué las cifras de abajo no incluyen a todos.
     base = {"registrados": len(filas), "jugados": len(jugados), "minimo_para_concluir": MIN_PARA_CONCLUIR,
-            "concluyente": len(jugados) >= MIN_PARA_CONCLUIR}
+            "concluyente": len(jugados) >= MIN_PARA_CONCLUIR,
+            "versiones": dict(Counter(r.get("version_modelo", "desconocida") for r in _leer()))}
     if not jugados:
         return base
     ll = np.array([f["log_loss"] for f in jugados])

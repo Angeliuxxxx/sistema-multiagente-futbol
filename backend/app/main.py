@@ -1,5 +1,6 @@
 """API del sistema multiagente. Arranque: uvicorn app.main:app --reload (desde /backend)."""
 import asyncio
+import os
 from contextlib import asynccontextmanager
 from datetime import date
 from typing import Literal
@@ -21,6 +22,13 @@ def _calentar() -> None:
     retrieval.calentar()
 
 
+def registrar_al_arrancar() -> bool:
+    """¿Registrar pronósticos al arrancar? Sí por defecto. `REGISTRAR_AL_ARRANCAR=0` lo apaga: sirve para probar o
+    desarrollar la API sin ensuciar el archivo versionado (data/registro_predicciones.jsonl). Se lee en cada llamada,
+    no al importar, para que .env y las pruebas puedan cambiarlo."""
+    return os.getenv("REGISTRAR_AL_ARRANCAR", "1").strip() not in ("0", "false", "False", "no")
+
+
 def _registrar_sin_romper() -> None:
     try:
         registro.registrar()
@@ -40,7 +48,8 @@ async def lifespan(_: FastAPI):
     # Guardamos la tarea en una variable: asyncio solo guarda referencias débiles y podría recolectarla a medias.
     calentamiento = asyncio.create_task(asyncio.to_thread(_calentar))
     # Registra los pronósticos de los próximos partidos al arrancar (idempotente): si nadie lo hace a mano, no se pierde ninguno.
-    asyncio.create_task(asyncio.to_thread(_registrar_sin_romper))
+    if registrar_al_arrancar():
+        asyncio.create_task(asyncio.to_thread(_registrar_sin_romper))
     yield
     calentamiento.cancel()
 
@@ -78,6 +87,7 @@ class PredictResponse(BaseModel):
     forma_local: dict[str, float]
     forma_visitante: dict[str, float]
     datos_hasta: str
+    aviso: str | None = Field(None, description="Solo modelo B. Presente si (1) `fecha` es anterior o igual a `datos_hasta` (el modelo final ya vio ese partido al entrenar: no es una predicción fuera de muestra) o (2) algún equipo lleva más de 30 días sin partido conocido (forma desactualizada). Si hay ambos casos, los avisos van juntos.")
 
 
 @app.get("/health")
@@ -153,6 +163,8 @@ def tabla() -> list[dict]:
 
 class PartidoRegistrado(BaseModel):
     registrado_en: str = Field(description="Cuándo se guardó el pronóstico (UTC); siempre anterior al inicio del partido")
+    version_modelo: str | None = Field(None, description="Huella (sha256, 12 caracteres) del .pkl que hizo el pronóstico")
+    commit_codigo: str | None = Field(None, description="Commit del código al registrar; ausente en los registros anteriores a este campo")
     inicio_partido: str
     jornada: int | None
     local: str
@@ -167,6 +179,7 @@ class ResumenRegistro(BaseModel):
     registrados: int
     jugados: int
     minimo_para_concluir: int
+    versiones: dict[str, int] = Field(default_factory=dict, description="Pronósticos registrados por versión del modelo (todas); las cifras de abajo son solo de la versión actual")
     concluyente: bool = Field(description="False mientras haya menos partidos jugados que `minimo_para_concluir`")
     aciertos: int | None = None
     acierto_pct: float | None = None

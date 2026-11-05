@@ -103,3 +103,6 @@
 .reg-estado.ok { color: var(--local); }
 .reg-estado.mal { color: var(--visitante); }
 .reg-estado.pendiente { color: var(--texto-suave); font-weight: 500; }
+
+/* Nota pequeña bajo las cifras (p. ej. qué significa el log-loss) */
+.nota-chica { font-size: .75rem; color: var(--texto-suave); margin: 0 0 .75rem; }
