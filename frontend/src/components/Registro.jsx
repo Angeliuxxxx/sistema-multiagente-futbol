@@ -10,6 +10,27 @@ function Dato({ valor, etiqueta }) {
   return <div className="dato"><strong>{valor ?? '—'}</strong><span>{etiqueta}</span></div>
 }
 
+// Lectura honesta de «modelo − sin saber nada» (log-loss: menor es mejor, así que una diferencia NEGATIVA favorece al modelo).
+// El intervalo es diferencia ± error_2e. Solo si el intervalo completo queda de un lado de 0 se puede afirmar algo.
+function Veredicto({ r }) {
+  const margen = r.error_2e
+  if (!r.concluyente) {
+    return (
+      <>
+        <strong>Todavía no se puede concluir nada.</strong> Hay {r.jugados} partidos jugados y hacen falta al menos {r.minimo_para_concluir}.
+        {margen != null && <> El margen todavía es amplio (± {margen}): no se puede concluir.</>}
+        {' '}El log-loss es más bajo cuanto mejor (menor es mejor).
+      </>
+    )
+  }
+  const inferior = r.diferencia - margen
+  const superior = r.diferencia + margen
+  let texto = 'No hay diferencia demostrable: el intervalo incluye 0.'
+  if (superior < 0) texto = 'El modelo supera al azar informado.'
+  else if (inferior > 0) texto = 'El modelo es peor que el azar informado de forma demostrable.'
+  return <>Diferencia modelo − «sin saber nada»: <strong>{r.diferencia}</strong> ± {margen}. {texto}</>
+}
+
 export function ResumenYPartidos({ datos }) {
   const r = datos.resumen
   return (
@@ -22,11 +43,7 @@ export function ResumenYPartidos({ datos }) {
             <Dato valor={r.log_loss_frecuencia} etiqueta="log-loss sin saber nada" />
           </div>
           {/* Aviso honesto SIEMPRE visible: con pocos partidos las cifras no prueban nada. */}
-          <p className="aviso">
-            {r.concluyente
-              ? <>Diferencia modelo − «sin saber nada»: <strong>{r.diferencia}</strong> ± {r.error_2e}. {r.diferencia + r.error_2e < 0 ? 'El modelo supera al azar informado.' : 'El intervalo incluye 0: no hay diferencia demostrable.'}</>
-              : <><strong>Todavía no se puede concluir nada.</strong> Hay {r.jugados} partidos jugados y hacen falta al menos {r.minimo_para_concluir}. El log-loss es más bajo cuanto mejor (menor es mejor).</>}
-          </p>
+          <p className="aviso"><Veredicto r={r} /></p>
           <h3>Partidos</h3>
           <ul className="registro">
             {datos.partidos.map((p) => {
