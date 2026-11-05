@@ -238,3 +238,27 @@ respondió «No encontré esa información» (fallo de recuperación; abstenció
 Lectura prudente: n=10, intervalo muy ancho (9/10 → IC95 de Wilson ≈ 60–98 %); el held-out lo redactó la misma persona que el desarrollo, y
 la métrica de «hecho clave» es generosa (la respuesta a «mínimo de jugadores» es confusa aunque contiene «siete»). La caída respecto al
 desarrollo (11/11) es lo esperable al pasar a datos no vistos. No se retocó nada tras ver estas cifras.
+
+## Latencia de la API de datos (04/11/2026)
+
+Equipo: portátil Intel Core i5-13420H (12 hilos), 7 GB de RAM visibles en WSL2, Linux 6.18 (WSL2). Fecha: 04/11/2026.
+Método: API real (`uvicorn`) arrancada con `REGISTRAR_AL_ARRANCAR=0` y una **copia** de `data/` (el registro versionado no se tocó), peticiones HTTP
+por `localhost` con `httpx`. «Frío» = primera petición de ese endpoint tras arrancar (los endpoints se probaron en el orden de la tabla, así que algunos
+se benefician de lo que cargó el anterior); «caliente» = 30 peticiones seguidas después (mediana y p95 = 29.ª de 30 ordenadas). Ollama no se consultó:
+el arranque lanza su calentamiento en un hilo aparte, que compite por CPU durante los primeros segundos. **Una sola corrida por escenario**: tómense como
+rangos, no como cifras exactas (el mismo endpoint varió hasta 4× entre escenarios sin que cambiara su código).
+
+Escenarios: **A** con red (token, caché de calendario vigente); **B** sin token (caché vencida); **C** con token pero sin conexión (proxy muerto, caché vencida);
+**D** sin token y sin conexión (caché vencida). En B–D la caché se envejeció a propósito a 2 días y el sistema siguió sirviendo con ella.
+
+| Endpoint | Frío (ms), rango A–D | Caliente: mediana (ms), rango A–D | Caliente: p95 (ms), rango A–D |
+|---|---|---|---|
+| `POST /predict` modelo b | 33–128 | 24–96 | 67–214 |
+| `POST /predict` modelo a | 12–22 | 11–18 | 16–31 |
+| `GET /proximos` | 82–337 | 94–162 | 191–299 |
+| `GET /tabla` | 84–129 | 90–142 | 153–245 |
+| `GET /registro` | 52–95 | 13–33 | 20–57 |
+
+Todas las respuestas fueron 200 y **muy por debajo del objetivo de 5 s**, también sin red. Lo lento de arrancar la API no es esto sino cargar el
+índice y el LLM (decenas de segundos hasta que `/health` responde en la máquina de prueba; no se midió con precisión). Límites: sin Ollama en el
+camino, un solo cliente, sin concurrencia, y solo desde `localhost`.
