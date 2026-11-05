@@ -120,7 +120,7 @@ curl -s -X POST localhost:8000/preguntar -H 'content-type: application/json' \
   -d '{"pregunta": "¿Cuántos puntos se dan por una victoria?"}'
 ```
 
-El backend carga el modelo, el CSV y el índice al arrancar y falla enseguida si falta alguno. Otros comandos del frontend: `npm run build` y `npm run lint` (ver [`frontend/README.md`](frontend/README.md)).
+El backend carga el modelo, el CSV y el índice al arrancar y falla enseguida si falta alguno. Además, **al arrancar guarda en `data/registro_predicciones.jsonl` los pronósticos de los próximos 10 días**: si estás probando y no quieres ensuciar ese archivo versionado, arranca con `REGISTRAR_AL_ARRANCAR=0 uvicorn app.main:app` (o ponlo en `.env`). Con `0`, `POST /actualizar` y `python -m scripts.registro_predicciones registrar` siguen registrando. Otros comandos del frontend: `npm run build` y `npm run lint` (ver [`frontend/README.md`](frontend/README.md)).
 
 ### Pruebas
 

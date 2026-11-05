@@ -1,5 +1,6 @@
 """API del sistema multiagente. Arranque: uvicorn app.main:app --reload (desde /backend)."""
 import asyncio
+import os
 from contextlib import asynccontextmanager
 from datetime import date
 from typing import Literal
@@ -21,6 +22,13 @@ def _calentar() -> None:
     retrieval.calentar()
 
 
+def registrar_al_arrancar() -> bool:
+    """¿Registrar pronósticos al arrancar? Sí por defecto. `REGISTRAR_AL_ARRANCAR=0` lo apaga: sirve para probar o
+    desarrollar la API sin ensuciar el archivo versionado (data/registro_predicciones.jsonl). Se lee en cada llamada,
+    no al importar, para que .env y las pruebas puedan cambiarlo."""
+    return os.getenv("REGISTRAR_AL_ARRANCAR", "1").strip() not in ("0", "false", "False", "no")
+
+
 def _registrar_sin_romper() -> None:
     try:
         registro.registrar()
@@ -40,7 +48,8 @@ async def lifespan(_: FastAPI):
     # Guardamos la tarea en una variable: asyncio solo guarda referencias débiles y podría recolectarla a medias.
     calentamiento = asyncio.create_task(asyncio.to_thread(_calentar))
     # Registra los pronósticos de los próximos partidos al arrancar (idempotente): si nadie lo hace a mano, no se pierde ninguno.
-    asyncio.create_task(asyncio.to_thread(_registrar_sin_romper))
+    if registrar_al_arrancar():
+        asyncio.create_task(asyncio.to_thread(_registrar_sin_romper))
     yield
     calentamiento.cancel()
 
