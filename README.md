@@ -13,7 +13,7 @@ Cada respuesta indica su fuente: conocimiento (con documento y página) o predic
 |---|---|---|
 | **Orquestador** | Decide a quién va cada pregunta (`prediccion`, `conocimiento`, `aclarar` o `fuera_de_alcance`) | Reglas deterministas, sin LLM. Devuelve el `motivo` de su decisión |
 | **Conocimiento (RAG)** | Responde sobre reglamento, competición e historia | ChromaDB (coseno) + BM25 fusionados con RRF, y un LLM local (Ollama `qwen2.5:7b`) detrás de LangChain |
-| **Predictivo** | Probabilidades de un partido entre dos equipos | XGBoost con 12 features de forma (últimos 5 partidos) |
+| **Predictivo** | Probabilidades de un partido entre dos equipos | XGBoost con 12 features de forma (últimos 5 partidos), en dos versiones: **modelo A** (xG y PPDA; datos hasta mayo de 2025) y **modelo B** (tiros en lugar de xG/PPDA; datos hasta ayer, el de por defecto). Ver «Modelo B, datos y registro» |
 
 ```mermaid
 flowchart TD
@@ -51,6 +51,9 @@ Un `git clone` **no basta para arrancar**: faltan los datos derivados. Esto es l
 | `la_liga_2014_2025_all_matches_final.csv` (datos crudos) | **No** (`data/*.csv` está ignorado) | **Hay que aportarlo.** Ver «Créditos» sobre su procedencia |
 | Los 5 PDF del corpus: `Primera_y_Segunda_Division.pdf` (Normas de Competición 2026/27, publicadas por la RFEF), `reglamento laliga 2025-2026.pdf`, `Reglas de Juego 2026_27_paginas individuales.pdf` y los 2 de Wikipedia (`Primera División de España…`, `El Clásico…`) | **No** (`data/*.pdf` está ignorado: son de terceros y el repo es público) | **Hay que aportarlos**, cada uno desde su fuente. Ver `docs/datos.md` |
 | `df_final_features.csv` y `team_matches.csv` | **No** | Los genera el notebook 01 |
+| `2025-2026.csv` y `2026-2027.csv` (resultados y tiros recientes, modelo B) | **No** (`data/*.csv`) | **Hay que descargarlos a mano** de football-data.co.uk (ver «Modelo B, datos y registro») |
+| `calendario_cache.json` | **No** | Lo crea la API sola al consultar football-data.org (necesita `FOOTBALL_DATA_KEY`) |
+| `modelo_predictivo_laliga_b.pkl`, `modelo_b_params.json` y `registro_predicciones.jsonl` | Sí | Ya vienen. El registro es el historial de pronósticos: no lo edites a mano |
 | `chroma_index/` (índice v1) y `chroma_index_v2/` | **No** (`data/chroma_index*/`) | Los generan los notebooks 03 y 05 |
 
 El CSV crudo y los PDF **no se suben al repositorio**: el CSV tiene licencia incierta (ver «Créditos») y los PDF son documentos de terceros. Cada persona debe aportar su copia.
@@ -79,6 +82,32 @@ El CSV crudo y los PDF **no se suben al repositorio**: el CSV tiene licencia inc
 
 **No verificado:** la regeneración completa (notebooks 01 → 02 → 03 → 05) no se ha comprobado de extremo a extremo. Tampoco se ha probado desde un entorno virtual
 limpio (la lista de `pip install` de arriba es la esperada, no una comprobada), ni *Restart & Run All* dentro de Jupyter, ni con PDF y CSV aportados por otra persona.
+
+## Modelo B, datos y registro
+
+El modelo A usa xG y PPDA, que no existen después de mayo de 2025 y no se tocan. El **modelo B** usa solo goles, tiros y tiros a puerta, y así
+puede actualizarse hasta ayer. Resultados y números honestos (B ≈ A, ninguno vence de forma demostrable a la frecuencia de clases): [`docs/modelo_b.md`](docs/modelo_b.md).
+
+**De dónde sale cada dato**
+
+| Dato | Fuente | Cómo entra |
+|---|---|---|
+| Partidos 2014 a mayo de 2025 | El CSV histórico (procedencia en «Créditos») | Archivo aportado en `data/` |
+| Partidos de 2025/26 y 2026/27 (goles, tiros) | [football-data.co.uk](https://www.football-data.co.uk) (Primera División, `SP1.csv`) | **Descarga manual**: guarda 2025/26 como `data/2025-2026.csv` y 2026/27 como `data/2026-2027.csv`. No hay descarga automática (ver «Créditos») |
+| Calendario, próximos partidos y resultados posteriores al último CSV | API de [football-data.org](https://www.football-data.org) (plan gratuito) | Token en `.env` como `FOOTBALL_DATA_KEY` (ver `.env.example`). Esos partidos llegan sin tiros |
+
+**Caché y sin red.** La API guarda su respuesta en `data/calendario_cache.json` (vigente 6 h). Sin token o sin conexión se usa la última caché, así que
+`/proximos` **solo funciona sin red si esa caché ya existe** (una vez que se ejecutó con token y red); sin caché devuelve una lista vacía. `/predict`, `/tabla` y
+`/registro` siguen funcionando con los CSV.
+
+**Actualizar.** `POST /actualizar` vuelve a leer la API y recalcula la forma con los partidos de ayer (y registra pronósticos nuevos). No reentrena el modelo.
+
+**Registro de predicciones (`data/registro_predicciones.jsonl`).** Cada pronóstico se guarda **antes** del partido (próximos 10 días), una sola vez por partido, y solo se añaden líneas.
+Cada línea trae `version_modelo` (huella del `.pkl`) y `commit_codigo` (commit del código; «desconocido» sin git). Cómo leerlo:
+- `GET /registro` o la pestaña **Acierto**: aciertos, log-loss del modelo y de «sin saber nada» (la frecuencia de clases), y su diferencia ± 2 errores estándar.
+  **Con menos de 30 partidos jugados no se puede concluir nada.** Solo cuenta la versión actual del modelo; `versiones` dice cuántos pronósticos hay de cada una.
+- `python -m scripts.registro_predicciones resumen` (desde `backend/`) imprime lo mismo en la terminal.
+- Para probar sin ensuciar el archivo versionado, arranca con `REGISTRAR_AL_ARRANCAR=0` y una copia de `data/` (`DATA_DIR=/ruta/copia`).
 
 ## Inicio rápido
 
@@ -214,6 +243,10 @@ es de unos 60 a 98 %. Un 100 % del orquestador no garantiza que generalice.
 - **Reglamento 2025/26** (`reglamento laliga 2025-2026.pdf`, 41 páginas, portada «REGLAMENTO · TEMPORADA 2025/26»). El archivo no indica quién lo emite; su origen está por confirmar. Los derechos pertenecen a sus titulares.
 - **Wikipedia** («Primera División de España» y «El Clásico»), exportados a PDF el 10/08/2026 (revisiones 174757811 y 174777709 de es.wikipedia.org). Texto bajo licencia
   [CC BY-SA](https://creativecommons.org/licenses/by-sa/4.0/deed.es), con atribución a sus autores; los PDF no traen el pie de licencia, así que la versión no consta en el archivo (Wikimedia usa hoy la 4.0).
+- **football-data.co.uk** (CSV recientes de Primera División, modelo B). Lo único que sabemos de sus condiciones: su `robots.txt` veta a los rastreadores de IA, por eso los CSV se
+  descargan **a mano** y ningún código del proyecto los baja. No revisamos aquí sus términos completos: consúltalos antes de redistribuir los archivos (por eso no están en Git).
+- **football-data.org** (calendario y resultados recientes por API). Lo único que sabemos: se usa el plan gratuito con token personal (`FOOTBALL_DATA_KEY`, nunca en el repo) y
+  hasta 10 peticiones por minuto, y por eso hay caché. No revisamos aquí sus términos completos.
 - **Modelo de embeddings:** `paraphrase-multilingual-MiniLM-L12-v2` (sentence-transformers). **LLM:** `qwen2.5` servido localmente por Ollama.
 
-Este proyecto es académico. No tiene afiliación con LaLiga, el IFAB ni Understat.
+Este proyecto es académico. No tiene afiliación con LaLiga, el IFAB, Understat, football-data.co.uk ni football-data.org.
