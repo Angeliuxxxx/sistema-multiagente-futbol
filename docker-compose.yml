@@ -9,6 +9,12 @@ services:
       # En Docker Desktop host.docker.internal existe solo; extra_hosts lo añade también en Docker Engine nativo.
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b}
+      # El registro versionado de pronósticos se hace desde el anfitrión (cd backend && python -m scripts.registro_predicciones registrar), no desde un
+      # contenedor cuya copia de /data se pierde al apagarlo. Para activarlo aquí: REGISTRAR_AL_ARRANCAR=1 en .env (se perdería al apagar).
+      REGISTRAR_AL_ARRANCAR: ${REGISTRAR_AL_ARRANCAR:-0}
+      # Token de football-data.org: se lee del .env del anfitrión al ejecutar compose; nunca se hornea en la imagen.
+      # Vacío = /proximos degrada a la caché (calendario_cache.json) sin romper la API.
+      FOOTBALL_DATA_KEY: ${FOOTBALL_DATA_KEY:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
