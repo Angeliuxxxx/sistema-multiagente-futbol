@@ -124,6 +124,20 @@ docker compose up --build       # primera vez: unos 10 min y varios GB; después
 
 Ollama **no** va en el contenedor: se usa el del anfitrión (GPU y modelos ya descargados). El contenedor lo alcanza en
 `host.docker.internal:11434`; para otro modelo: `OLLAMA_MODEL=qwen2.5:3b docker compose up` (también existe `OLLAMA_BASE_URL`).
+
+**Qué necesita `data/`** (el contenedor falla al arrancar, nombrando el archivo, si falta alguno de los obligatorios):
+
+| Archivo | Obligatorio | Para qué |
+|---|---|---|
+| `modelo_predictivo_laliga.pkl`, `team_matches.csv` | Sí | Modelo A |
+| `modelo_predictivo_laliga_b.pkl`, `la_liga_2014_2025_all_matches_final.csv` | Sí | Modelo B (por defecto) y su histórico |
+| `chroma_index_v2/` | Sí | Índice del RAG |
+| `2025-2026.csv`, `2026-2027.csv` | No | Resultados recientes del modelo B (si faltan, solo se usa el histórico) |
+| `calendario_cache.json`, `registro_predicciones.jsonl` | No | Se **copian** al contenedor: `/registro` muestra lo ya guardado |
+
+- `./data` se monta en **solo lectura** (`:ro`): el contenedor nunca escribe en tu carpeta. Lo que la API escribe (caché del calendario, registro) vive en una copia que se pierde al apagarlo.
+- **El contenedor no registra pronósticos por defecto** (`REGISTRAR_AL_ARRANCAR=0` en el compose). El registro versionado se hace desde el anfitrión: `cd backend && python -m scripts.registro_predicciones registrar`.
+- `FOOTBALL_DATA_KEY` se lee del `.env` del anfitrión (compose lo pasa al contenedor; no entra en la imagen). Sin ella `/proximos` usa la copia de `calendario_cache.json`, y si tampoco existe devuelve una lista vacía.
 Más detalle, medidas y qué no se probó: [`docs/despliegue.md`](docs/despliegue.md).
 
 ### Modo desarrollo
